@@ -1,48 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URI")
 }
 
-generator client {
-  provider = "prisma-client-js"
+model Auth {
+  id           Int     @id @default(autoincrement())
+  username     String  @unique
+  password     String
+  refreshToken String?
+  accessToken  String
+  rejectToken  String?
+  permit       Permit?
 }
 
-model User {
-  id       String   @id @default(uuid())
-  email    String   @unique
-  username String
-  password String
-  accessToken String?
-  refreshToken String?
-  permit   Permit[]
-  disabled Boolean  @default(false)
+model Institution {
+  id             Int       @id @default(autoincrement())
+  authId         Int
+  name           String
+  address        String
+  phoneNumber1   String
+  phoneNumber2   String
+  institutionKey String
+  teachers       Teacher[]
+  drivers        Driver[]
+  students       Student[]
+  parents        Parent[]
+  permit         Permit[]
+}
+
+model Parent {
+  id             Int          @id @default(autoincrement())
+  authId         Int
+  firstName      String
+  lastName       String
+  tc             String
+  address        String
+  phoneNumber1   String
+  phoneNumber2   String
+  institutionKey String
+  studentId      Int          @unique
+  student        Student      @relation(fields: [studentId], references: [id])
+  institution    Institution? @relation(fields: [institutionId], references: [id])
+  institutionId  Int?
+}
+
+model Student {
+  id             Int           @id @default(autoincrement())
+  authId         Int
+  firstName      String
+  lastName       String
+  tc             String
+  address        String
+  phoneNumber1   String
+  phoneNumber2   String
+  parentId       Int
+  institutionKey String
+  parent         Parent?
+  classrooms     Classroom[]
+  absentees      Absenteeism[]
+  institution    Institution?  @relation(fields: [institutionId], references: [id])
+  institutionId  Int?
+  waypoint       Waypoint[]
+}
+
+model Teacher {
+  id             Int          @id @default(autoincrement())
+  authId         Int
+  firstName      String
+  lastName       String
+  tc             String
+  address        String
+  phoneNumber1   String
+  phoneNumber2   String
+  institutionKey String
+  classrooms     Classroom[]
+  institution    Institution? @relation(fields: [institutionId], references: [id])
+  institutionId  Int?
+}
+
+model Classroom {
+  id         Int           @id @default(autoincrement())
+  teacherId  Int
+  studentId  Int
+  classNo    String
+  startClass DateTime
+  endClass   DateTime
+  classDate  DateTime
+  status     String
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  absentees  Absenteeism[]
+  teacher    Teacher       @relation(fields: [teacherId], references: [id])
+  student    Student       @relation(fields: [studentId], references: [id])
+}
+
+model Absenteeism {
+  id          Int        @id @default(autoincrement())
+  studentId   Int
+  classDate   String
+  joined      Boolean
+  notJoined   Boolean
+  totalCount  Int
+  student     Student    @relation(fields: [studentId], references: [id])
+  classroom   Classroom? @relation(fields: [classroomId], references: [id])
+  classroomId Int?
+}
+
+model Driver {
+  id             Int          @id @default(autoincrement())
+  authId         Int
+  firstName      String
+  lastName       String
+  tc             String
+  address        String
+  phoneNumber1   String
+  phoneNumber2   String
+  institutionKey String
+  routes         Route[]
+  institution    Institution? @relation(fields: [institutionId], references: [id])
+  institutionId  Int?
+  waypoint       Waypoint[]
+}
+
+model Route {
+  id         Int      @id @default(autoincrement())
+  driverId   Int
+  waypoints  String
+  classDate  DateTime
+  classStart DateTime
+  driver     Driver   @relation(fields: [driverId], references: [id])
+}
+
+model Waypoint {
+  id        Int     @id @default(autoincrement())
+  driverId  Int
+  studentId Int
+  address   String
+  lon       Float
+  lat       Float
+  driver    Driver  @relation(fields: [driverId], references: [id])
+  student   Student @relation(fields: [studentId], references: [id])
 }
 
 model Role {
-  id             String           @id @default(uuid())
-  name           String
-  permit         Permit[]
-  rolePermission RolePermission[]
-}
-
-model Permission {
-  id             String           @id @default(uuid())
-  name           String
-  rolePermission RolePermission[]
-}
-
-model RolePermission {
-  id           String     @id @default(uuid())
-  role         Role       @relation(fields: [roleId], references: [id])
-  roleId       String
-  permission   Permission @relation(fields: [permissionId], references: [id])
-  permissionId String
+  id       Int      @id @default(autoincrement())
+  roleType String
+  permit   Permit[]
 }
 
 model Permit {
-  id     String @id @default(uuid())
-  user   User   @relation(fields: [userId], references: [id])
-  userId String
-  role   Role   @relation(fields: [roleId], references: [id])
-  roleId String
+  id            Int          @id @default(autoincrement())
+  auth          Auth?        @relation(fields: [authId], references: [id])
+  authId        Int?         @unique
+  role          Role?        @relation(fields: [roleId], references: [id])
+  roleId        Int?
+  institution   Institution? @relation(fields: [institutionId], references: [id])
+  institutionId Int?
 }

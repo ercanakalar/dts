@@ -1,96 +1,90 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
-import * as bcrypt from "bcrypt";
+import { scrypt, randomBytes, createHash } from "crypto";
+import { promisify } from "util";
+
 import { PrismaService } from "src/prisma/prisma.service";
-import { JwtPayload } from "../types/auth.types";
-import type { AuthService } from "../auth.service";
+
+const scryptAsync = promisify(scrypt);
 
 @Injectable()
 export class HelperService {
     constructor(
         private jwtService: JwtService,
-        private config: ConfigService,
+        private configService: ConfigService,
         private prismaService: PrismaService,
     ) {}
 
-    async givePermit(userId: number, contextId: number) {
-        await this.prismaService.permit.create({
-            data: {
-                userId,
-                contextId,
-                roleId: 1,
-            },
-        });
+    async toHashPassword(password: string) {
+        const salt = randomBytes(8).toString("hex");
+        const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+
+        return `${buf.toString("hex")}.${salt}`;
     }
 
-    async getTokens(
-        theUser: Awaited<ReturnType<AuthService["findLoginUser"]>>,
-    ) {
-        const payload: JwtPayload = {
-            id: theUser.id,
-            email: theUser.email,
-            username: theUser.username,
-            permit: theUser.permit,
-        };
-        const [accessToken] = await Promise.all([
-            this.jwtService.signAsync(payload, {
-                secret: this.config.get<string>("SECRET_KEY"),
-                expiresIn: "7d",
-            }),
-        ]);
+    async comparePassword(
+        storedPassword: string,
+        suppliedPassword: string,
+    ): Promise<boolean> {
+        const [hashedPassword, salt] = storedPassword.split(".");
+        const buf = (await scryptAsync(suppliedPassword, salt, 64)) as Buffer;
 
-        return { accessToken };
-    }
-
-    async hashData(data: string) {
-        return await bcrypt.hash(data, 10);
-    }
-
-    async createTokenForEmail(email: string) {
-        const payload = {
-            email,
-        };
-        const [emailToken] = await Promise.all([
-            this.jwtService.signAsync(payload, {
-                secret: this.config.get<string>("SECRET_KEY"),
-                expiresIn: "5m",
-                algorithm: "HS256",
-            }),
-        ]);
-        return emailToken;
-    }
-
-    async decodeToken(token: string) {
-        return await this.jwtService.decode(token);
+        return buf.toString("hex") === hashedPassword;
     }
 
     async verifyToken(token: string) {
-        try {
-            return await this.jwtService.verifyAsync(token, {
-                secret: this.config.get<string>("SECRET_KEY"),
-                algorithms: ["HS256"],
-            });
-        } catch {
-            throw new UnauthorizedException("Bu bağlantının süresi doldu");
+        return this.jwtService.verifyAsync(token, {
+            secret: this.configService.get("SECRET_KEY"),
+        });
+    }
+
+    changedPasswordAfter(JWTTimestamp: number, passwordChangedAt: number) {
+        if (passwordChangedAt > JWTTimestamp) {
+            return true;
         }
+        return false;
     }
 
-    async comparePasswords(password: string, hashPassword: string) {
-        return await bcrypt.compare(password, hashPassword);
+    async createPasswordResetToken() {
+        const randomBuffer = randomBytes(32);
+        const passwordResetToken = randomBuffer.toString("hex");
+
+        const hash = createHash("sha256");
+        hash.update(passwordResetToken);
+        const newResetToken = hash.digest("hex");
+
+        return { newResetToken };
     }
 
-    async contextToken(contextId: string) {
-        const payload = {
-            context: contextId,
-        };
-        const [contextToken] = await Promise.all([
-            this.jwtService.signAsync(payload, {
-                secret: this.config.get<string>("SECRET_KEY"),
-                expiresIn: "7d",
-            }),
-        ]);
+    newDate(min: number): Date {
+        const currentDate = new Date();
+        const futureDate = new Date(currentDate.getTime());
+        futureDate.setMinutes(futureDate.getMinutes() + min);
+        return futureDate;
+    }
 
-        return { context_token: contextToken };
+    async createToken(user: any) {
+        return this.jwtService.signAsync(user, {
+            secret: this.configService.get("SECRET_KEY"),
+            expiresIn: this.configService.get("JWT_EXPIRES_IN"),
+        });
+    }
+
+    async checkExpiredToken(token: string) {
+        try {
+            const payload = await this.jwtService.verifyAsync(token, {
+                secret: this.configService.get("SECRET_KEY"),
+            });
+
+            const now = Math.floor(Date.now() / 1000);
+            if (payload.exp && payload.exp < now) {
+                return true;
+            }
+
+            return false;
+        } catch {
+            return true;
+        }
     }
 }

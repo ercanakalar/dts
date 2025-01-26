@@ -5,7 +5,6 @@ import {
 } from "@nestjs/platform-express";
 import { diskStorage } from "multer";
 import { join } from "path";
-import { VALID_UPLOADS_MIME_TYPES } from "src/flight-plan/types/flight-plan.types";
 
 export function UploadFileInterceptor(filename: string) {
     return FileInterceptor("file", {
@@ -19,16 +18,10 @@ export function UploadFileInterceptor(filename: string) {
             },
         }),
         fileFilter: (req, file, callback) => {
-            if (VALID_UPLOADS_MIME_TYPES.includes(file.mimetype)) {
-                callback(null, true);
-            } else {
-                callback(
-                    new BadRequestException(
-                        "Only PDF and PNG files are allowed!",
-                    ),
-                    false,
-                );
-            }
+            callback(
+                new BadRequestException("Only PDF and PNG files are allowed!"),
+                false,
+            );
         },
     });
 }

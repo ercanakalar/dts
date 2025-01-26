@@ -1,5 +1,4 @@
 import { FileValidator } from "@nestjs/common";
-import { VALID_UPLOADS_MIME_TYPES } from "src/flight-plan/types/flight-plan.types";
 
 export interface CustomUploadTypeValidatorOptions {
     fileType: string[];
@@ -16,11 +15,7 @@ export class CustomUploadFileTypeValidator extends FileValidator {
     }
 
     public isValid(file: any) {
-        const isThere = VALID_UPLOADS_MIME_TYPES.find(
-            (type) => type === file.mimetype,
-        );
-        if (isThere) return true;
-        return false;
+        return this._allowedMimeTypes.includes(file.mimetype);
     }
 
     public buildErrorMessage() {
