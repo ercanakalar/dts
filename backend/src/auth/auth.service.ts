@@ -8,7 +8,8 @@ import { JwtService } from "@nestjs/jwt";
 
 import { HelperService } from "./helper/helper.service";
 import { PrismaService } from "src/prisma/prisma.service";
-import { CreateUser, LoginUser } from "./types/auth.types";
+import { CreateUser, GiveRole, LoginUser } from "./types/auth.types";
+import { Prisma } from "@prisma/client";
 
 @Injectable()
 export class AuthService {
@@ -19,20 +20,48 @@ export class AuthService {
         private helperService: HelperService,
     ) {}
 
-    async register(user: CreateUser) {
+    async createUser(user: CreateUser) {
         const hashedPassword = await this.helperService.toHashPassword(
             user.password,
         );
 
-        const token = await this.helperService.createToken({
-            username: user.username,
+        const institution = await this.prismaService.institution.findFirst({
+            where: {
+                institutionKey: user.institutionKey,
+            },
+            select: {
+                id: true,
+            },
         });
 
-        await this.prismaService.auth.create({
+        if (institution === null) {
+            throw new NotFoundException("Kurum bulunamadı.");
+        }
+
+        const token = await this.helperService.createToken({
+            tc: user.tc,
+            institutionId: institution.id,
+        });
+
+        const newAuth = await this.prismaService.auth
+            .create({
+                data: {
+                    email: user.email,
+                    tc: user.tc,
+                    phoneNumber: user.phoneNumber,
+                    password: hashedPassword,
+                    accessToken: token,
+                },
+            })
+            .catch(() => {
+                throw new UnauthorizedException("Bu kullanıcı zaten kayıtlı.");
+            });
+
+        await this.prismaService.permit.create({
             data: {
-                username: user.username,
-                password: hashedPassword,
-                accessToken: token,
+                institutionId: institution.id,
+                authId: newAuth.id,
+                roleId: user.roleId,
             },
         });
 
@@ -40,13 +69,17 @@ export class AuthService {
     }
 
     async login(user: LoginUser) {
+        const userWhere: Prisma.AuthWhereInput = {
+            OR: [{ email: user.username }, { tc: user.username }],
+        };
+
         const foundUser = await this.prismaService.auth.findFirst({
-            where: {
-                username: user.username,
-            },
+            where: userWhere,
             select: {
                 id: true,
-                username: true,
+                email: true,
+                tc: true,
+                phoneNumber: true,
                 password: true,
                 permit: {
                     include: {
@@ -71,8 +104,14 @@ export class AuthService {
             throw new UnauthorizedException("Şifre yanlış.");
         }
 
+        const verified = await this.helperService.verifyToken(
+            foundUser.accessToken,
+        );
+
         const token = await this.helperService.createToken({
-            username: foundUser.username,
+            tc: foundUser.tc,
+            institutionId: verified.institutionId,
+            permitId: foundUser?.permit?.id,
         });
 
         await this.prismaService.auth.update({
@@ -85,5 +124,82 @@ export class AuthService {
         });
 
         return { accessToken: token };
+    }
+
+    async getUserById(id: string) {
+        const user = await this.prismaService.auth.findUnique({
+            where: {
+                id,
+            },
+            select: {
+                id: true,
+                email: true,
+                tc: true,
+                phoneNumber: true,
+                permit: {
+                    include: {
+                        institution: true,
+                        role: true,
+                    },
+                },
+            },
+        });
+
+        if (!user) {
+            throw new NotFoundException("Kullanıcı bulunamadı.");
+        }
+
+        return user;
+    }
+
+    async giveRole(body: GiveRole) {
+        const user = await this.prismaService.auth.findUnique({
+            where: {
+                id: body.userId,
+            },
+            select: {
+                id: true,
+                permit: {
+                    select: {
+                        institution: true,
+                        role: true,
+                    },
+                },
+            },
+        });
+
+        if (!user) {
+            throw new NotFoundException("Kullanıcı bulunamadı.");
+        }
+
+        console.log(user);
+
+        const role = await this.prismaService.role.findUnique({
+            where: {
+                id: body.roleId,
+            },
+            select: {
+                id: true,
+            },
+        });
+
+        if (!role) {
+            throw new NotFoundException("Rol bulunamadı.");
+        }
+
+        await this.prismaService.auth.update({
+            where: {
+                id: body.userId,
+            },
+            data: {
+                permit: {
+                    update: {
+                        roleId: body.roleId,
+                    },
+                },
+            },
+        });
+
+        return { message: "Rol başarıyla verildi." };
     }
 }

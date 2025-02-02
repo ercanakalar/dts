@@ -64,11 +64,22 @@ export class HelperService {
         return futureDate;
     }
 
-    async createToken(user: any) {
-        return this.jwtService.signAsync(user, {
-            secret: this.configService.get("SECRET_KEY"),
-            expiresIn: this.configService.get("JWT_EXPIRES_IN"),
-        });
+    async createToken(data: {
+        tc: string;
+        institutionId: string;
+        permitId?: string;
+    }) {
+        return this.jwtService.signAsync(
+            {
+                userTc: data.tc,
+                institutionId: data.institutionId,
+                permitId: data.permitId,
+            },
+            {
+                secret: this.configService.get("SECRET_KEY"),
+                expiresIn: this.configService.get("JWT_EXPIRES_IN"),
+            },
+        );
     }
 
     async checkExpiredToken(token: string) {

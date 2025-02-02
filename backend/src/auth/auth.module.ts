@@ -6,8 +6,7 @@ import { JwtModule, JwtService } from "@nestjs/jwt";
 import { PrismaModule } from "src/prisma/prisma.module";
 import { ConfigModule } from "@nestjs/config";
 import { EmailService } from "src/notification/email/email.service";
-import { APP_GUARD } from "@nestjs/core";
-import { AuthGuard } from "src/common/guards/auth-guard/auth-guard.guard";
+import { AccessStrategy } from "./strategy/access.strategy";
 
 @Module({
     imports: [PrismaModule, ConfigModule.forRoot(), JwtModule.register({})],
@@ -16,10 +15,7 @@ import { AuthGuard } from "src/common/guards/auth-guard/auth-guard.guard";
         HelperService,
         JwtService,
         EmailService,
-        {
-            provide: APP_GUARD,
-            useClass: AuthGuard,
-        },
+        AccessStrategy,
     ],
     controllers: [AuthController],
 })

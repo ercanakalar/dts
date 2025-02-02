@@ -8,8 +8,10 @@ datasource db {
 }
 
 model Auth {
-  id           Int     @id @default(autoincrement())
-  username     String  @unique
+  id           String  @id @default(uuid())
+  email        String? @unique
+  tc           String  @unique
+  phoneNumber  String  @unique
   password     String
   refreshToken String?
   accessToken  String
@@ -18,8 +20,7 @@ model Auth {
 }
 
 model Institution {
-  id             Int       @id @default(autoincrement())
-  authId         Int
+  id             String    @id @default(uuid())
   name           String
   address        String
   phoneNumber1   String
@@ -33,7 +34,7 @@ model Institution {
 }
 
 model Parent {
-  id             Int          @id @default(autoincrement())
+  id             String       @id @default(uuid())
   authId         Int
   firstName      String
   lastName       String
@@ -42,14 +43,14 @@ model Parent {
   phoneNumber1   String
   phoneNumber2   String
   institutionKey String
-  studentId      Int          @unique
-  student        Student      @relation(fields: [studentId], references: [id])
+  student        Student?     @relation(fields: [studentId], references: [id])
+  studentId      String?      @unique
   institution    Institution? @relation(fields: [institutionId], references: [id])
-  institutionId  Int?
+  institutionId  String?
 }
 
 model Student {
-  id             Int           @id @default(autoincrement())
+  id             String        @id @default(uuid())
   authId         Int
   firstName      String
   lastName       String
@@ -62,13 +63,13 @@ model Student {
   parent         Parent?
   classrooms     Classroom[]
   absentees      Absenteeism[]
-  institution    Institution?  @relation(fields: [institutionId], references: [id])
-  institutionId  Int?
   waypoint       Waypoint[]
+  institution    Institution?  @relation(fields: [institutionId], references: [id])
+  institutionId  String?
 }
 
 model Teacher {
-  id             Int          @id @default(autoincrement())
+  id             String       @id @default(uuid())
   authId         Int
   firstName      String
   lastName       String
@@ -79,13 +80,11 @@ model Teacher {
   institutionKey String
   classrooms     Classroom[]
   institution    Institution? @relation(fields: [institutionId], references: [id])
-  institutionId  Int?
+  institutionId  String?
 }
 
 model Classroom {
-  id         Int           @id @default(autoincrement())
-  teacherId  Int
-  studentId  Int
+  id         String        @id @default(uuid())
   classNo    String
   startClass DateTime
   endClass   DateTime
@@ -96,22 +95,24 @@ model Classroom {
   absentees  Absenteeism[]
   teacher    Teacher       @relation(fields: [teacherId], references: [id])
   student    Student       @relation(fields: [studentId], references: [id])
+  teacherId  String
+  studentId  String
 }
 
 model Absenteeism {
-  id          Int        @id @default(autoincrement())
-  studentId   Int
+  id          String     @id @default(uuid())
   classDate   String
   joined      Boolean
   notJoined   Boolean
   totalCount  Int
   student     Student    @relation(fields: [studentId], references: [id])
+  studentId   String
   classroom   Classroom? @relation(fields: [classroomId], references: [id])
-  classroomId Int?
+  classroomId String?
 }
 
 model Driver {
-  id             Int          @id @default(autoincrement())
+  id             String       @id @default(uuid())
   authId         Int
   firstName      String
   lastName       String
@@ -122,42 +123,42 @@ model Driver {
   institutionKey String
   routes         Route[]
   institution    Institution? @relation(fields: [institutionId], references: [id])
-  institutionId  Int?
+  institutionId  String?
   waypoint       Waypoint[]
 }
 
 model Route {
-  id         Int      @id @default(autoincrement())
-  driverId   Int
+  id         String   @id @default(uuid())
   waypoints  String
   classDate  DateTime
   classStart DateTime
   driver     Driver   @relation(fields: [driverId], references: [id])
+  driverId   String
 }
 
 model Waypoint {
-  id        Int     @id @default(autoincrement())
-  driverId  Int
-  studentId Int
+  id        String  @id @default(uuid())
   address   String
   lon       Float
   lat       Float
   driver    Driver  @relation(fields: [driverId], references: [id])
+  driverId  String
   student   Student @relation(fields: [studentId], references: [id])
+  studentId String
 }
 
 model Role {
-  id       Int      @id @default(autoincrement())
+  id       String   @id @default(uuid())
   roleType String
   permit   Permit[]
 }
 
 model Permit {
-  id            Int          @id @default(autoincrement())
+  id            String       @id @default(uuid())
   auth          Auth?        @relation(fields: [authId], references: [id])
-  authId        Int?         @unique
+  authId        String?      @unique
   role          Role?        @relation(fields: [roleId], references: [id])
-  roleId        Int?
+  roleId        String?
   institution   Institution? @relation(fields: [institutionId], references: [id])
-  institutionId Int?
+  institutionId String?
 }

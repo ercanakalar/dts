@@ -1,17 +1,20 @@
 import {
     Body,
     Controller,
+    Get,
     HttpCode,
     HttpStatus,
     Post,
+    Query,
     UseGuards,
 } from "@nestjs/common";
 import { Public } from "src/common/decorators";
-import { CreateUser, LoginUser } from "./types/auth.types";
+import { CreateUser, GiveRole, LoginUser } from "./types/auth.types";
 import { AuthService } from "./auth.service";
 import { HelperService } from "./helper/helper.service";
 import { EmailService } from "src/notification/email/email.service";
-import { EmailExistsGuard } from "src/common/guards/email-exists/email-exists.guard";
+import { UserExistsGuard } from "src/common/guards/user-exists/user-exists.guard";
+import { AdminGuard } from "src/common/guards/admin/admin.guard";
 
 @Controller("api/user")
 export class AuthController {
@@ -22,11 +25,11 @@ export class AuthController {
     ) {}
 
     @Public()
-    @Post("register")
-    @UseGuards(EmailExistsGuard)
+    @Post("create-user")
+    @UseGuards(UserExistsGuard)
     @HttpCode(HttpStatus.CREATED)
-    async register(@Body() user: CreateUser) {
-        return await this.authService.register(user);
+    async createUser(@Body() user: CreateUser) {
+        return await this.authService.createUser(user);
     }
 
     @Public()
@@ -110,11 +113,12 @@ export class AuthController {
     //     return await this.authService.getAllUsersByFilter(params);
     // }
 
-    // @Get(":id(\\d+)")
-    // @HttpCode(HttpStatus.OK)
-    // async getUserById(@Param("id") id: string) {
-    //     return await this.authService.getUserById(parseInt(id));
-    // }
+    @Get("")
+    @UseGuards(AdminGuard)
+    @HttpCode(HttpStatus.OK)
+    async getUserById(@Query() params: { id: string }) {
+        return await this.authService.getUserById(params.id);
+    }
 
     // @Get("attendant")
     // @HttpCode(HttpStatus.OK)
@@ -162,11 +166,12 @@ export class AuthController {
     //     return await this.authService.updateUser(user);
     // }
 
-    // @Post("permit")
-    // @HttpCode(HttpStatus.OK)
-    // async giveRole(@Body() body: GiveRole) {
-    //     return await this.authService.giveRole(body);
-    // }
+    @Post("permit")
+    @UseGuards(AdminGuard)
+    @HttpCode(HttpStatus.OK)
+    async giveRole(@Body() body: GiveRole) {
+        return await this.authService.giveRole(body);
+    }
 
     // @Delete("permit/:permitId")
     // @HttpCode(HttpStatus.OK)

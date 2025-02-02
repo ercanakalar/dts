@@ -8,19 +8,19 @@ import { Prisma } from "@prisma/client";
 import { PrismaService } from "src/prisma/prisma.service";
 
 @Injectable()
-export class EmailExistsGuard implements CanActivate {
+export class UserExistsGuard implements CanActivate {
     constructor(private readonly prismaService: PrismaService) {}
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
-        const { username } = request.body;
+        const { email, tc, phoneNumber } = request.body;
 
-        if (!username) {
-            throw new ConflictException("Kullanıcı adı boş olamaz.");
+        if (!tc || !phoneNumber) {
+            throw new ConflictException("TC ve telefon numarası zorunludur.");
         }
 
         const userWhere: Prisma.AuthWhereInput = {
-            OR: [{ username: username }],
+            OR: [{ email, tc, phoneNumber }],
         };
 
         const userExists = await this.prismaService.auth.findFirst({
@@ -28,7 +28,7 @@ export class EmailExistsGuard implements CanActivate {
         });
 
         if (userExists) {
-            throw new ConflictException("Kullanıcı adı zaten mevcut.");
+            throw new ConflictException("Bu kullanıcı zaten kayıtlı.");
         }
 
         return true;

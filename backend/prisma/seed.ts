@@ -1,28 +1,15 @@
 import { PrismaClient } from "@prisma/client";
+import { v4 as uuidv4 } from "uuid";
+
 const prisma = new PrismaClient();
 async function main() {
     await prisma.role.createMany({
         data: [
-            {
-                id: 1,
-                roleType: "admin",
-            },
-            {
-                id: 2,
-                roleType: "institution",
-            },
-            {
-                id: 3,
-                roleType: "parent",
-            },
-            {
-                id: 4,
-                roleType: "student",
-            },
-            {
-                id: 5,
-                roleType: "driver",
-            },
+            { id: uuidv4(), roleType: "admin" },
+            { id: uuidv4(), roleType: "institution" },
+            { id: uuidv4(), roleType: "parent" },
+            { id: uuidv4(), roleType: "student" },
+            { id: uuidv4(), roleType: "driver" },
         ],
     });
 }

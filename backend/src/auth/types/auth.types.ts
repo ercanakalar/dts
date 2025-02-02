@@ -1,6 +1,10 @@
 export type CreateUser = {
-    username: string;
+    email: string;
+    tc: string;
+    phoneNumber: string;
     password: string;
+    institutionKey: string;
+    roleId: string;
 };
 
 export type LoginUser = {
@@ -13,4 +17,16 @@ export type JwtPayload = {
     username: string;
     role: string;
     institutionId: number;
+};
+
+export type GiveRole = {
+    userId: string;
+    roleId: string;
+    institutionId: string;
+};
+
+export type DecodedToken = {
+    userTc: string;
+    institutionId: string;
+    permitId: string;
 };
