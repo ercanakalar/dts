@@ -98,4 +98,22 @@ export class HelperService {
             return true;
         }
     }
+
+    async getRoleId(role: string) {
+        const roleId = await this.prismaService.role.findFirst({
+            where: {
+                roleType: role,
+            },
+            select: {
+                id: true,
+                roleType: true,
+            },
+        });
+
+        if (!roleId) {
+            throw new Error("Role not found");
+        }
+
+        return roleId;
+    }
 }

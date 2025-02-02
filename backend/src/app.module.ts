@@ -10,16 +10,20 @@ import { APP_GUARD } from "@nestjs/core";
 import { AccessGuard } from "./common/guards/access-guard";
 import { EmailService } from "./notification/email/email.service";
 import { FileManagementService } from "./common/services/file-management/file-management.service";
+import { StudentModule } from "./student/student.module";
+import { StudentService } from "./student/student.service";
 
 @Module({
     imports: [
         AuthModule,
+        StudentModule,
         PrismaModule,
         ConfigModule.forRoot(),
         NotificationModule,
     ],
     providers: [
         AuthService,
+        StudentService,
         HelperService,
         JwtService,
         { provide: APP_GUARD, useClass: AccessGuard },

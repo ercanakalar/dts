@@ -51,15 +51,15 @@ model Parent {
 
 model Student {
   id             String        @id @default(uuid())
-  authId         Int
+  authId         String?
   firstName      String
   lastName       String
   tc             String
   address        String
   phoneNumber1   String
   phoneNumber2   String
-  parentId       Int
   institutionKey String
+  parentId       String?
   parent         Parent?
   classrooms     Classroom[]
   absentees      Absenteeism[]

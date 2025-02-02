@@ -3,19 +3,15 @@ import {
     NotFoundException,
     UnauthorizedException,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { JwtService } from "@nestjs/jwt";
+import { Prisma } from "@prisma/client";
 
 import { HelperService } from "./helper/helper.service";
 import { PrismaService } from "src/prisma/prisma.service";
 import { CreateUser, GiveRole, LoginUser } from "./types/auth.types";
-import { Prisma } from "@prisma/client";
 
 @Injectable()
 export class AuthService {
     constructor(
-        private readonly jwtService: JwtService,
-        private readonly configService: ConfigService,
         private prismaService: PrismaService,
         private helperService: HelperService,
     ) {}
@@ -126,7 +122,7 @@ export class AuthService {
         return { accessToken: token };
     }
 
-    async getUserById(id: string) {
+    async getUserById(id: string, institutionId: string) {
         const user = await this.prismaService.auth.findUnique({
             where: {
                 id,
@@ -147,6 +143,17 @@ export class AuthService {
 
         if (!user) {
             throw new NotFoundException("Kullanıcı bulunamadı.");
+        }
+
+        const currentUserRole = await this.helperService.getRoleId("admin");
+
+        if (
+            currentUserRole.roleType !== "admin" &&
+            user?.permit?.institution?.id !== institutionId
+        ) {
+            throw new UnauthorizedException(
+                "Bu kullanıcıya erişim izniniz yok.",
+            );
         }
 
         return user;
