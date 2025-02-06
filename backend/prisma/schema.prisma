@@ -35,7 +35,7 @@ model Institution {
 
 model Parent {
   id             String       @id @default(uuid())
-  authId         Int
+  authId         String
   firstName      String
   lastName       String
   tc             String
@@ -43,10 +43,10 @@ model Parent {
   phoneNumber1   String
   phoneNumber2   String
   institutionKey String
-  student        Student?     @relation(fields: [studentId], references: [id])
-  studentId      String?      @unique
+  studentTc      String[]
   institution    Institution? @relation(fields: [institutionId], references: [id])
   institutionId  String?
+  student        Student[]
 }
 
 model Student {
@@ -60,7 +60,7 @@ model Student {
   phoneNumber2   String
   institutionKey String
   parentId       String?
-  parent         Parent?
+  parent         Parent?       @relation(fields: [parentId], references: [id])
   classrooms     Classroom[]
   absentees      Absenteeism[]
   waypoint       Waypoint[]
