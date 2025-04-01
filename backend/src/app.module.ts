@@ -17,7 +17,8 @@ import { FileManagementService } from "./common/services/file-management/file-ma
 
 import { StudentModule } from "./student/student.module";
 import { StudentService } from "./student/student.service";
-import { TeacherModule } from './teacher/teacher.module';
+import { TeacherModule } from "./teacher/teacher.module";
+import { TeacherService } from "./teacher/teacher.service";
 
 @Module({
     imports: [
@@ -32,6 +33,7 @@ import { TeacherModule } from './teacher/teacher.module';
         JwtService,
         AuthService,
         StudentService,
+        TeacherService,
         HelperService,
         { provide: APP_GUARD, useClass: AccessGuard },
         EmailService,

@@ -10,6 +10,7 @@ async function main() {
             { id: uuidv4(), roleType: "parent" },
             { id: uuidv4(), roleType: "student" },
             { id: uuidv4(), roleType: "driver" },
+            { id: uuidv4(), roleType: "teacher" },
         ],
     });
 }
