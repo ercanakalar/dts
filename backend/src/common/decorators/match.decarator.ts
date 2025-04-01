@@ -18,7 +18,7 @@ export function Match(property: string, validationOptions?: ValidationOptions) {
                     const relatedValue = (args.object as any)[
                         relatedPropertyName
                     ];
-                    return value === relatedValue; // Check if values match
+                    return value === relatedValue;
                 },
                 defaultMessage(args: ValidationArguments) {
                     const [relatedPropertyName] = args.constraints;

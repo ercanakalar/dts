@@ -29,24 +29,19 @@ model Institution {
   teachers       Teacher[]
   drivers        Driver[]
   students       Student[]
-  parents        Parent[]
   permit         Permit[]
 }
 
 model Parent {
-  id             String       @id @default(uuid())
-  authId         String
-  firstName      String
-  lastName       String
-  tc             String
-  address        String
-  phoneNumber1   String
-  phoneNumber2   String
-  institutionKey String
-  studentTc      String[]
-  institution    Institution? @relation(fields: [institutionId], references: [id])
-  institutionId  String?
-  student        Student[]
+  id           String  @id @default(uuid())
+  authId       String?
+  firstName    String
+  lastName     String
+  tc           String
+  address      String
+  phoneNumber1 String
+  studentId    String
+  student      Student @relation(fields: [studentId], references: [id])
 }
 
 model Student {
@@ -59,13 +54,12 @@ model Student {
   phoneNumber1   String
   phoneNumber2   String
   institutionKey String
-  parentId       String?
-  parent         Parent?       @relation(fields: [parentId], references: [id])
   classrooms     Classroom[]
   absentees      Absenteeism[]
   waypoint       Waypoint[]
   institution    Institution?  @relation(fields: [institutionId], references: [id])
-  institutionId  String?
+  institutionId  String
+  parents        Parent[]
 }
 
 model Teacher {
@@ -93,10 +87,10 @@ model Classroom {
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
   absentees  Absenteeism[]
-  teacher    Teacher       @relation(fields: [teacherId], references: [id])
-  student    Student       @relation(fields: [studentId], references: [id])
   teacherId  String
+  teacher    Teacher       @relation(fields: [teacherId], references: [id])
   studentId  String
+  student    Student       @relation(fields: [studentId], references: [id])
 }
 
 model Absenteeism {
@@ -105,10 +99,10 @@ model Absenteeism {
   joined      Boolean
   notJoined   Boolean
   totalCount  Int
-  student     Student    @relation(fields: [studentId], references: [id])
   studentId   String
-  classroom   Classroom? @relation(fields: [classroomId], references: [id])
+  student     Student    @relation(fields: [studentId], references: [id])
   classroomId String?
+  classroom   Classroom? @relation(fields: [classroomId], references: [id])
 }
 
 model Driver {
@@ -122,8 +116,8 @@ model Driver {
   phoneNumber2   String
   institutionKey String
   routes         Route[]
-  institution    Institution? @relation(fields: [institutionId], references: [id])
   institutionId  String?
+  institution    Institution? @relation(fields: [institutionId], references: [id])
   waypoint       Waypoint[]
 }
 
@@ -132,8 +126,8 @@ model Route {
   waypoints  String
   classDate  DateTime
   classStart DateTime
-  driver     Driver   @relation(fields: [driverId], references: [id])
   driverId   String
+  driver     Driver   @relation(fields: [driverId], references: [id])
 }
 
 model Waypoint {
@@ -141,10 +135,10 @@ model Waypoint {
   address   String
   lon       Float
   lat       Float
-  driver    Driver  @relation(fields: [driverId], references: [id])
   driverId  String
-  student   Student @relation(fields: [studentId], references: [id])
+  driver    Driver  @relation(fields: [driverId], references: [id])
   studentId String
+  student   Student @relation(fields: [studentId], references: [id])
 }
 
 model Role {
@@ -155,10 +149,10 @@ model Role {
 
 model Permit {
   id            String       @id @default(uuid())
-  auth          Auth?        @relation(fields: [authId], references: [id])
   authId        String?      @unique
-  role          Role?        @relation(fields: [roleId], references: [id])
+  auth          Auth?        @relation(fields: [authId], references: [id])
   roleId        String?
-  institution   Institution? @relation(fields: [institutionId], references: [id])
+  role          Role?        @relation(fields: [roleId], references: [id])
   institutionId String?
+  institution   Institution? @relation(fields: [institutionId], references: [id])
 }

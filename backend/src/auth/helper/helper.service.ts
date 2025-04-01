@@ -5,6 +5,7 @@ import { scrypt, randomBytes, createHash } from "crypto";
 import { promisify } from "util";
 
 import { PrismaService } from "src/prisma/prisma.service";
+import { DecodedToken } from "../types/auth.types";
 
 const scryptAsync = promisify(scrypt);
 
@@ -17,10 +18,17 @@ export class HelperService {
     ) {}
 
     async toHashPassword(password: string) {
+        if (!password || typeof password !== "string") {
+            throw new Error(
+                "Invalid password: Password must be a non-empty string.",
+            );
+        }
+
         const salt = randomBytes(8).toString("hex");
         const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+        const hashedPassword = buf.toString("hex");
 
-        return `${buf.toString("hex")}.${salt}`;
+        return `${hashedPassword}.${salt}`;
     }
 
     async comparePassword(
@@ -33,7 +41,7 @@ export class HelperService {
         return buf.toString("hex") === hashedPassword;
     }
 
-    async verifyToken(token: string) {
+    async verifyToken(token: string): Promise<DecodedToken> {
         return this.jwtService.verifyAsync(token, {
             secret: this.configService.get("SECRET_KEY"),
         });

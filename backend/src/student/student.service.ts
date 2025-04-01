@@ -3,7 +3,7 @@ import * as xlsx from "xlsx";
 
 import { HelperService } from "src/auth/helper/helper.service";
 import { PrismaService } from "src/prisma/prisma.service";
-import { StudentFile } from "./types/student.type";
+import { StudentFile, UploadStudentType } from "./types/student.type";
 
 @Injectable()
 export class StudentService {
@@ -12,66 +12,8 @@ export class StudentService {
         private helperService: HelperService,
     ) {}
 
-    async uploadStudents(body: any, institutionId: string) {
-        const role = await this.helperService.getRoleId("student");
-
-        for (const student of body) {
-            const token = await this.helperService.createToken({
-                tc: student.tc,
-                institutionId,
-            });
-
-            const hashedPassword = await this.helperService.toHashPassword(
-                student.phoneNumber1,
-            );
-
-            const auth = await this.prismaService.auth.findUnique({
-                where: {
-                    tc: student.tc,
-                },
-            });
-
-            if (auth) {
-                continue;
-            }
-
-            const newAuth = await this.prismaService.auth.create({
-                data: {
-                    tc: student.tc,
-                    phoneNumber: student.phoneNumber1,
-                    password: hashedPassword,
-                    accessToken: token,
-                },
-            });
-
-            if (!newAuth) {
-                continue;
-            }
-
-            await this.prismaService.permit.create({
-                data: {
-                    institutionId,
-                    authId: newAuth.id,
-                    roleId: role.id,
-                },
-            });
-
-            await this.prismaService.student.create({
-                data: {
-                    authId: newAuth.id,
-                    firstName: student.firstName,
-                    lastName: student.lastName,
-                    tc: student.tc,
-                    address: student.address,
-                    phoneNumber1: student.phoneNumber1,
-                    phoneNumber2: student.phoneNumber2,
-                    institutionKey: student.institutionKey,
-                    institutionId,
-                },
-            });
-        }
-
-        return { message: "Students uploaded successfully" };
+    async uploadStudents(body: UploadStudentType[], institutionId: string) {
+        return this.createStudents(body, institutionId);
     }
 
     async uploadStudentsWithFile(
@@ -87,12 +29,15 @@ export class StudentService {
         const worksheet = workbook.Sheets[sheetName];
         const rows: StudentFile[] = xlsx.utils.sheet_to_json(worksheet);
 
+        return this.createStudents(rows, institutionId);
+    }
+    async createStudents(students: StudentFile[], institutionId: string) {
         const role = await this.helperService.getRoleId("student");
 
         let insertedStudentCount = 0;
         let alreadyInsertedStudentCount = 0;
 
-        for (const student of rows) {
+        for (const student of students) {
             const token = await this.helperService.createToken({
                 tc: student.tc,
                 institutionId,
@@ -134,7 +79,7 @@ export class StudentService {
                 },
             });
 
-            await this.prismaService.student.create({
+            const newStudent = await this.prismaService.student.create({
                 data: {
                     authId: newAuth.id,
                     firstName: student.firstName,
@@ -147,13 +92,65 @@ export class StudentService {
                     institutionId,
                 },
             });
+
+            await this.prismaService.parent.create({
+                data: {
+                    authId: newAuth.id,
+                    firstName: student.parentName,
+                    lastName: student.parentLastName,
+                    tc: student.parentTc,
+                    address: student.parentAddress,
+                    phoneNumber1: student.phoneNumber1,
+                    studentId: newStudent.id,
+                },
+            });
             insertedStudentCount += 1;
         }
         return {
-            total: rows.length,
+            total: students.length,
             insertedStudentCount,
             alreadyInsertedStudentCount,
             message: "Students uploaded successfully",
+        };
+    }
+
+    uploadStudent(student: UploadStudentType, institutionId: string) {
+        return this.createStudents([student], institutionId);
+    }
+
+    async deleteStudent(id: string) {
+        const student = await this.prismaService.student.findUnique({
+            where: {
+                id,
+            },
+        });
+
+        if (!student) {
+            throw new BadRequestException("Student not found");
+        }
+
+        await this.prismaService.parent.deleteMany({
+            where: {
+                studentId: student.id,
+            },
+        });
+
+        await this.prismaService.student.delete({
+            where: {
+                id: student.id,
+            },
+        });
+
+        if (student.authId) {
+            await this.prismaService.auth.delete({
+                where: {
+                    id: student.authId,
+                },
+            });
+        }
+
+        return {
+            message: "Student deleted successfully",
         };
     }
 }

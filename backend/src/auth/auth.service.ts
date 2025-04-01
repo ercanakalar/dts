@@ -179,8 +179,6 @@ export class AuthService {
             throw new NotFoundException("Kullanıcı bulunamadı.");
         }
 
-        console.log(user);
-
         const role = await this.prismaService.role.findUnique({
             where: {
                 id: body.roleId,
