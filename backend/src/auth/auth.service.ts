@@ -39,6 +39,18 @@ export class AuthService {
             institutionId: institution.id,
         });
 
+        const role = await this.prismaService.role.findUnique({
+            where: {
+                id: user.roleId,
+            },
+        });
+
+        if (!role) {
+            throw new NotFoundException(
+                `Institution with ID ${user.roleId} not found`,
+            );
+        }
+
         const newAuth = await this.prismaService.auth
             .create({
                 data: {
