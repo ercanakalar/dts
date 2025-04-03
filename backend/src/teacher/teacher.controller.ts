@@ -4,13 +4,14 @@ import {
     HttpCode,
     HttpStatus,
     Post,
+    Put,
     Request,
     UseGuards,
 } from "@nestjs/common";
 import { TeacherService } from "./teacher.service";
 import { InstitutionGuard } from "src/common/guards/institution/institution.guard";
 import { CustomRequest } from "src/common/type/common.type";
-import { Teacher } from "./types/teacher.type";
+import { Teacher, TeacherUpdate } from "./types/teacher.type";
 
 @Controller("api/teacher")
 export class TeacherController {
@@ -19,10 +20,15 @@ export class TeacherController {
     @Post("create-teacher")
     @UseGuards(InstitutionGuard)
     @HttpCode(HttpStatus.OK)
-    async crateStudent(@Body() body: Teacher, @Request() req: CustomRequest) {
+    async crateTeacher(@Body() body: Teacher, @Request() req: CustomRequest) {
         const institutionId = req.user.institutionId;
-        console.log(body, institutionId);
-
         return await this.teacherService.createTeacher(body, institutionId);
+    }
+
+    @Put("update-teacher")
+    @UseGuards(InstitutionGuard)
+    @HttpCode(HttpStatus.OK)
+    async updateTeacher(@Body() body: TeacherUpdate) {
+        return await this.teacherService.updateTeacher(body);
     }
 }

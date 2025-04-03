@@ -72,9 +72,18 @@ model Teacher {
   phoneNumber1   String
   phoneNumber2   String
   institutionKey String
-  classrooms     Classroom[]
-  institution    Institution? @relation(fields: [institutionId], references: [id])
+  experienceYear Int
+  subjectId      String
+  object         Subject      @relation(fields: [subjectId], references: [id])
   institutionId  String?
+  institution    Institution? @relation(fields: [institutionId], references: [id])
+  classrooms     Classroom[]
+}
+
+model Subject {
+  id      String    @id @default(uuid())
+  name    String
+  Teacher Teacher[]
 }
 
 model Classroom {

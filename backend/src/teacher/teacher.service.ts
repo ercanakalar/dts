@@ -1,7 +1,12 @@
-import { Injectable } from "@nestjs/common";
+import {
+    Injectable,
+    InternalServerErrorException,
+    NotFoundException,
+} from "@nestjs/common";
 import { HelperService } from "src/auth/helper/helper.service";
 import { PrismaService } from "src/prisma/prisma.service";
-import { Teacher } from "./types/teacher.type";
+import { Teacher, TeacherUpdate } from "./types/teacher.type";
+import { Prisma } from "@prisma/client";
 
 @Injectable()
 export class TeacherService {
@@ -39,6 +44,8 @@ export class TeacherService {
                 institutionId,
                 authId: teacherAuth.id,
                 tc: body.tc,
+                subjectId: body.subjectId,
+                experienceYear: body.experienceYear,
                 institutionKey: body.institutionKey,
             },
         });
@@ -54,5 +61,27 @@ export class TeacherService {
         return {
             message: "Teacher created successfully",
         };
+    }
+
+    async updateTeacher(body: TeacherUpdate) {
+        const { id, ...rest } = body;
+        try {
+            return await this.prismaService.teacher.update({
+                where: {
+                    id,
+                },
+                data: rest,
+            });
+        } catch (error) {
+            if (
+                error instanceof Prisma.PrismaClientKnownRequestError &&
+                error.code === "P2025"
+            ) {
+                throw new NotFoundException(
+                    `Institution with ID ${id} not found`,
+                );
+            }
+            throw new InternalServerErrorException("Something went wrong");
+        }
     }
 }
