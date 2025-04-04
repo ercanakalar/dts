@@ -21,6 +21,7 @@ import { TeacherModule } from "./teacher/teacher.module";
 import { TeacherService } from "./teacher/teacher.service";
 import { DriverModule } from "./driver/driver.module";
 import { DriverService } from "./driver/driver.service";
+import { ClassroomModule } from './classroom/classroom.module';
 
 @Module({
     imports: [
@@ -31,6 +32,7 @@ import { DriverService } from "./driver/driver.service";
         StudentModule,
         TeacherModule,
         DriverModule,
+        ClassroomModule,
     ],
     providers: [
         JwtService,
