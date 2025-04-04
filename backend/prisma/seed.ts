@@ -13,7 +13,7 @@ async function main() {
             { id: uuidv4(), roleType: "teacher" },
         ],
     });
-    await prisma.institution.create({
+    const firstInstitution = await prisma.institution.create({
         data: {
             name: "Greenwood High School",
             address: "123 Education Lane, Springfield",
@@ -23,7 +23,7 @@ async function main() {
         },
     });
 
-    await prisma.institution.create({
+    const secondInstitution = await prisma.institution.create({
         data: {
             name: "Riverdale Academy",
             address: "456 River Road, Riverdale",
@@ -41,6 +41,22 @@ async function main() {
     await prisma.subject.create({
         data: {
             name: "Physics",
+        },
+    });
+
+    await prisma.classDetails.create({
+        data: {
+            classNo: "Class 1",
+            description: "First Grade",
+            institutionId: firstInstitution.id,
+        },
+    });
+
+    await prisma.classDetails.create({
+        data: {
+            classNo: "A 1",
+            description: "High Grade",
+            institutionId: secondInstitution.id,
         },
     });
 }

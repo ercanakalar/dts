@@ -8,19 +8,21 @@ datasource db {
 }
 
 model Auth {
-  id           String  @id @default(uuid())
-  email        String? @unique
-  tc           String  @unique
-  phoneNumber  String  @unique
+  id           String   @id @default(uuid())
+  email        String?  @unique
+  tc           String   @unique
+  phoneNumber  String   @unique
   password     String
   refreshToken String?
   accessToken  String
   rejectToken  String?
   permit       Permit?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
 }
 
 model Institution {
-  id             String    @id @default(uuid())
+  id             String         @id @default(uuid())
   name           String
   address        String
   phoneNumber1   String
@@ -30,18 +32,24 @@ model Institution {
   drivers        Driver[]
   students       Student[]
   permit         Permit[]
+  classDetails   ClassDetails[]
+  classroom      Classroom[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @default(now()) @updatedAt
 }
 
 model Parent {
-  id           String  @id @default(uuid())
+  id           String   @id @default(uuid())
   authId       String?
   firstName    String
   lastName     String
-  tc           String  @unique
+  tc           String   @unique
   address      String
   phoneNumber1 String
   studentId    String
-  student      Student @relation(fields: [studentId], references: [id])
+  student      Student  @relation(fields: [studentId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
 }
 
 model Student {
@@ -60,6 +68,8 @@ model Student {
   institution    Institution?  @relation(fields: [institutionId], references: [id])
   institutionId  String
   parents        Parent[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @default(now()) @updatedAt
 }
 
 model Teacher {
@@ -78,28 +88,46 @@ model Teacher {
   institutionId  String?
   institution    Institution? @relation(fields: [institutionId], references: [id])
   classrooms     Classroom[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt
 }
 
 model Subject {
-  id      String    @id @default(uuid())
-  name    String
-  Teacher Teacher[]
+  id        String    @id @default(uuid())
+  name      String
+  Teacher   Teacher[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
 }
 
 model Classroom {
-  id         String        @id @default(uuid())
-  classNo    String
-  startClass DateTime
-  endClass   DateTime
-  classDate  DateTime
-  status     String
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-  absentees  Absenteeism[]
-  teacherId  String
-  teacher    Teacher       @relation(fields: [teacherId], references: [id])
-  studentId  String
-  student    Student       @relation(fields: [studentId], references: [id])
+  id             String          @id @default(uuid())
+  startClass     DateTime
+  endClass       DateTime
+  classDate      DateTime
+  status         ClassroomStatus
+  absentees      Absenteeism[]
+  institutionId  String
+  institution    Institution?    @relation(fields: [institutionId], references: [id])
+  classDetailsId String
+  classDetails   ClassDetails    @relation(fields: [classDetailsId], references: [id])
+  teacherId      String
+  teacher        Teacher         @relation(fields: [teacherId], references: [id])
+  studentId      String
+  student        Student         @relation(fields: [studentId], references: [id])
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @default(now()) @updatedAt
+}
+
+model ClassDetails {
+  id            String       @id @default(uuid())
+  classNo       String
+  description   String?
+  classroom     Classroom[]
+  institutionId String
+  institution   Institution? @relation(fields: [institutionId], references: [id])
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @default(now()) @updatedAt
 }
 
 model Absenteeism {
@@ -112,6 +140,8 @@ model Absenteeism {
   student     Student    @relation(fields: [studentId], references: [id])
   classroomId String?
   classroom   Classroom? @relation(fields: [classroomId], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @default(now()) @updatedAt
 }
 
 model Driver {
@@ -128,6 +158,8 @@ model Driver {
   institutionId  String?
   institution    Institution? @relation(fields: [institutionId], references: [id])
   waypoint       Waypoint[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt
 }
 
 model Route {
@@ -137,23 +169,29 @@ model Route {
   classStart DateTime
   driverId   String
   driver     Driver   @relation(fields: [driverId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
 }
 
 model Waypoint {
-  id        String  @id @default(uuid())
+  id        String   @id @default(uuid())
   address   String
   lon       Float
   lat       Float
   driverId  String
-  driver    Driver  @relation(fields: [driverId], references: [id])
+  driver    Driver   @relation(fields: [driverId], references: [id])
   studentId String
-  student   Student @relation(fields: [studentId], references: [id])
+  student   Student  @relation(fields: [studentId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Role {
-  id       String   @id @default(uuid())
-  roleType String
-  permit   Permit[]
+  id        String   @id @default(uuid())
+  roleType  String
+  permit    Permit[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model Permit {
@@ -164,4 +202,13 @@ model Permit {
   role          Role?        @relation(fields: [roleId], references: [id])
   institutionId String?
   institution   Institution? @relation(fields: [institutionId], references: [id])
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @default(now()) @updatedAt
+}
+
+enum ClassroomStatus {
+  SCHEDULED
+  ONGOING
+  COMPLETED
+  CANCELED
 }
