@@ -116,7 +116,7 @@ model Absenteeism {
 
 model Driver {
   id             String       @id @default(uuid())
-  authId         Int
+  authId         String
   firstName      String
   lastName       String
   tc             String       @unique

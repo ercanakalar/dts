@@ -19,6 +19,8 @@ import { StudentModule } from "./student/student.module";
 import { StudentService } from "./student/student.service";
 import { TeacherModule } from "./teacher/teacher.module";
 import { TeacherService } from "./teacher/teacher.service";
+import { DriverModule } from "./driver/driver.module";
+import { DriverService } from "./driver/driver.service";
 
 @Module({
     imports: [
@@ -28,12 +30,14 @@ import { TeacherService } from "./teacher/teacher.service";
         AuthModule,
         StudentModule,
         TeacherModule,
+        DriverModule,
     ],
     providers: [
         JwtService,
         AuthService,
         StudentService,
         TeacherService,
+        DriverService,
         HelperService,
         { provide: APP_GUARD, useClass: AccessGuard },
         EmailService,
