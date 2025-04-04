@@ -37,7 +37,7 @@ model Parent {
   authId       String?
   firstName    String
   lastName     String
-  tc           String
+  tc           String  @unique
   address      String
   phoneNumber1 String
   studentId    String
@@ -49,7 +49,7 @@ model Student {
   authId         String?
   firstName      String
   lastName       String
-  tc             String
+  tc             String        @unique
   address        String
   phoneNumber1   String
   phoneNumber2   String
@@ -67,7 +67,7 @@ model Teacher {
   authId         String?
   firstName      String
   lastName       String
-  tc             String
+  tc             String       @unique
   address        String
   phoneNumber1   String
   phoneNumber2   String
@@ -119,7 +119,7 @@ model Driver {
   authId         Int
   firstName      String
   lastName       String
-  tc             String
+  tc             String       @unique
   address        String
   phoneNumber1   String
   phoneNumber2   String
