@@ -4,6 +4,7 @@ import * as xlsx from "xlsx";
 import { HelperService } from "src/auth/helper/helper.service";
 import { PrismaService } from "src/prisma/prisma.service";
 import {
+    Parent,
     StudentFile,
     UpdateParent,
     UpdateStudent,
@@ -275,6 +276,116 @@ export class StudentService {
         return {
             message: "Parent updated successfully",
             updatedParent,
+        };
+    }
+
+    async crateParent(body: Parent) {
+        const student = await this.prismaService.student.findUnique({
+            where: {
+                id: body.studentId,
+            },
+        });
+
+        if (!student) {
+            throw new BadRequestException("Student not found");
+        }
+
+        const token = await this.helperService.createToken({
+            tc: body.tc,
+            institutionId: student.institutionId,
+        });
+
+        const hashedPassword = await this.helperService.toHashPassword(body.tc);
+
+        if (!hashedPassword) {
+            throw new BadRequestException("Password hashing failed");
+        }
+
+        const auth = await this.prismaService.auth.findUnique({
+            where: {
+                tc: body.tc,
+            },
+        });
+
+        if (auth) {
+            throw new BadRequestException("Parent already exists");
+        }
+
+        const newAuth = await this.prismaService.auth.create({
+            data: {
+                tc: body.tc,
+                phoneNumber: body.phoneNumber1,
+                password: hashedPassword,
+                accessToken: token,
+            },
+        });
+
+        if (!newAuth) {
+            throw new BadRequestException("Parent creation failed");
+        }
+
+        await this.prismaService.permit.create({
+            data: {
+                institutionId: student.institutionId,
+                authId: newAuth.id,
+                roleId: body.roleId,
+            },
+        });
+
+        const parent = await this.prismaService.parent.create({
+            data: {
+                firstName: body.firstName,
+                lastName: body.lastName,
+                tc: body.tc,
+                address: body.address,
+                phoneNumber1: body.phoneNumber1,
+                studentId: student.id,
+            },
+        });
+
+        return {
+            message: "Parent created successfully",
+            parent,
+        };
+    }
+
+    async getStudentById(id: string) {
+        const student = await this.prismaService.student.findUnique({
+            where: {
+                id,
+            },
+            include: {
+                absentees: true,
+                parents: {
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                        tc: true,
+                        address: true,
+                        phoneNumber1: true,
+                    },
+                },
+                institution: {
+                    select: {
+                        id: true,
+                        name: true,
+                        address: true,
+                        phoneNumber1: true,
+                        phoneNumber2: true,
+                        institutionKey: true,
+                    },
+                },
+            },
+        });
+
+        if (!student) {
+            throw new BadRequestException("Student not found");
+        }
+
+        return {
+            message: "Student retrieved successfully",
+            student,
         };
     }
 }

@@ -49,3 +49,13 @@ export type UpdateParent = {
     parentNumber1?: string;
     parentTc?: string;
 };
+
+export type Parent = {
+    studentId: string;
+    firstName: string;
+    lastName: string;
+    tc: string;
+    address: string;
+    phoneNumber1: string;
+    roleId: string;
+};

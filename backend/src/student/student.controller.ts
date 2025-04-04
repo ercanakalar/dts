@@ -2,8 +2,10 @@ import {
     Body,
     Controller,
     Delete,
+    Get,
     HttpCode,
     HttpStatus,
+    Param,
     Patch,
     Post,
     Query,
@@ -20,6 +22,7 @@ import { StudentService } from "./student.service";
 
 import { CustomRequest } from "src/common/type/common.type";
 import {
+    Parent,
     UpdateParent,
     UpdateStudent,
     UploadStudentType,
@@ -57,6 +60,12 @@ export class StudentController {
     async crateStudent(@Body() body: UploadStudentType) {
         return await this.studentsService.uploadStudent(body);
     }
+    @Post("create-parent")
+    @UseGuards(InstitutionGuard)
+    @HttpCode(HttpStatus.OK)
+    async crateParent(@Body() body: Parent) {
+        return await this.studentsService.crateParent(body);
+    }
 
     @Delete("delete")
     @UseGuards(InstitutionGuard)
@@ -76,5 +85,12 @@ export class StudentController {
     @HttpCode(HttpStatus.OK)
     async updateParent(@Body() body: UpdateParent) {
         return await this.studentsService.updateParent(body);
+    }
+
+    @Get("/:id")
+    @UseGuards(InstitutionGuard)
+    @HttpCode(HttpStatus.OK)
+    async getStudentById(@Param() params: { id: string }) {
+        return await this.studentsService.getStudentById(params.id);
     }
 }
