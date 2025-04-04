@@ -1,12 +1,15 @@
 import {
+    ConflictException,
     Injectable,
     InternalServerErrorException,
     NotFoundException,
 } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
+
 import { HelperService } from "src/auth/helper/helper.service";
 import { PrismaService } from "src/prisma/prisma.service";
+
 import { Teacher, TeacherUpdate } from "./types/teacher.type";
-import { Prisma } from "@prisma/client";
 
 @Injectable()
 export class TeacherService {
@@ -15,24 +18,49 @@ export class TeacherService {
         private helperService: HelperService,
     ) {}
 
-    async createTeacher(body: Teacher, institutionId: string) {
-        const teacherRole = await this.helperService.getRoleId("teacher");
+    async createTeacher(body: Teacher) {
+        const institution = await this.prismaService.institution.findUnique({
+            where: {
+                id: body.institutionId,
+            },
+        });
+        if (!institution) {
+            throw new NotFoundException(
+                `Institution with ID ${body.institutionId} not found`,
+            );
+        }
 
         const token = await this.helperService.createToken({
             tc: body.tc,
-            institutionId,
+            institutionId: institution.id,
         });
 
         const hashedPassword = await this.helperService.toHashPassword(body.tc);
-
-        const teacherAuth = await this.prismaService.auth.create({
-            data: {
+        if (!hashedPassword) {
+            throw new InternalServerErrorException("Password hashing failed");
+        }
+        const existingTeacher = await this.prismaService.teacher.findUnique({
+            where: {
                 tc: body.tc,
-                phoneNumber: body.phoneNumber1,
-                password: hashedPassword,
-                accessToken: token,
             },
         });
+        if (existingTeacher) {
+            throw new InternalServerErrorException(
+                `Teacher with TC ${body.tc} already exists`,
+            );
+        }
+        const teacherAuth = await this.prismaService.auth
+            .create({
+                data: {
+                    tc: body.tc,
+                    phoneNumber: body.phoneNumber1,
+                    password: hashedPassword,
+                    accessToken: token,
+                },
+            })
+            .catch(() => {
+                throw new ConflictException("The teacher already exists");
+            });
 
         await this.prismaService.teacher.create({
             data: {
@@ -41,20 +69,20 @@ export class TeacherService {
                 address: body.address,
                 phoneNumber1: body.phoneNumber1,
                 phoneNumber2: body.phoneNumber2,
-                institutionId,
+                institutionId: institution.id,
                 authId: teacherAuth.id,
                 tc: body.tc,
                 subjectId: body.subjectId,
                 experienceYear: body.experienceYear,
-                institutionKey: body.institutionKey,
+                institutionKey: institution.name,
             },
         });
 
         await this.prismaService.permit.create({
             data: {
-                institutionId,
+                institutionId: institution.id,
                 authId: teacherAuth.id,
-                roleId: teacherRole.id,
+                roleId: body.roleId,
             },
         });
 
@@ -81,6 +109,29 @@ export class TeacherService {
                     `Institution with ID ${id} not found`,
                 );
             }
+            throw new InternalServerErrorException("Something went wrong");
+        }
+    }
+
+    async deleteTeacher(id: string) {
+        const teacher = await this.prismaService.teacher.findUnique({
+            where: {
+                id,
+            },
+        });
+        if (!teacher) {
+            throw new NotFoundException(`Teacher with ID ${id} not found`);
+        }
+        try {
+            await this.prismaService.teacher.delete({
+                where: {
+                    id,
+                },
+            });
+            return {
+                message: "Teacher deleted successfully",
+            };
+        } catch {
             throw new InternalServerErrorException("Something went wrong");
         }
     }

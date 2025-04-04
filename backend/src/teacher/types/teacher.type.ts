@@ -6,8 +6,9 @@ export type Teacher = {
     phoneNumber1: string;
     phoneNumber2: string;
     experienceYear: number;
-    institutionKey: string;
+    institutionId: string;
     subjectId: string;
+    roleId: string;
 };
 
 export interface TeacherUpdate extends Teacher {
