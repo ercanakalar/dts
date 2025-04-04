@@ -21,7 +21,8 @@ import { TeacherModule } from "./teacher/teacher.module";
 import { TeacherService } from "./teacher/teacher.service";
 import { DriverModule } from "./driver/driver.module";
 import { DriverService } from "./driver/driver.service";
-import { ClassroomModule } from './classroom/classroom.module';
+import { ClassroomModule } from "./classroom/classroom.module";
+import { ClassroomService } from "./classroom/classroom.service";
 
 @Module({
     imports: [
@@ -40,6 +41,7 @@ import { ClassroomModule } from './classroom/classroom.module';
         StudentService,
         TeacherService,
         DriverService,
+        ClassroomService,
         HelperService,
         { provide: APP_GUARD, useClass: AccessGuard },
         EmailService,
