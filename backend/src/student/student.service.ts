@@ -376,6 +376,13 @@ export class StudentService {
                         institutionKey: true,
                     },
                 },
+                classrooms: {
+                    include: {
+                        classDetails: true,
+                        teacher: true,
+                        absentees: true,
+                    },
+                },
             },
         });
 
