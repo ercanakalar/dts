@@ -4,6 +4,7 @@ import {
     Delete,
     HttpCode,
     HttpStatus,
+    Patch,
     Post,
     Query,
     Req,
@@ -18,7 +19,11 @@ import { InstitutionGuard } from "src/common/guards/institution/institution.guar
 import { StudentService } from "./student.service";
 
 import { CustomRequest } from "src/common/type/common.type";
-import { UploadStudentType } from "./types/student.type";
+import {
+    UpdateParent,
+    UpdateStudent,
+    UploadStudentType,
+} from "./types/student.type";
 
 @Controller("api/student")
 export class StudentController {
@@ -53,12 +58,23 @@ export class StudentController {
         return await this.studentsService.uploadStudent(body);
     }
 
-    @Delete("delete/:id")
+    @Delete("delete")
     @UseGuards(InstitutionGuard)
     @HttpCode(HttpStatus.OK)
     async deleteStudent(@Query() params: { id: string }) {
-        console.log(params);
-
         return await this.studentsService.deleteStudent(params.id);
+    }
+
+    @Patch("update")
+    @UseGuards(InstitutionGuard)
+    @HttpCode(HttpStatus.OK)
+    async updateStudent(@Body() body: UpdateStudent) {
+        return await this.studentsService.updateStudent(body);
+    }
+    @Patch("update-parent")
+    @UseGuards(InstitutionGuard)
+    @HttpCode(HttpStatus.OK)
+    async updateParent(@Body() body: UpdateParent) {
+        return await this.studentsService.updateParent(body);
     }
 }

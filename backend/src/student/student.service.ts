@@ -3,7 +3,12 @@ import * as xlsx from "xlsx";
 
 import { HelperService } from "src/auth/helper/helper.service";
 import { PrismaService } from "src/prisma/prisma.service";
-import { StudentFile, UploadStudentType } from "./types/student.type";
+import {
+    StudentFile,
+    UpdateParent,
+    UpdateStudent,
+    UploadStudentType,
+} from "./types/student.type";
 
 @Injectable()
 export class StudentService {
@@ -162,13 +167,114 @@ export class StudentService {
         if (student.authId) {
             await this.prismaService.auth.delete({
                 where: {
-                    id: student.authId,
+                    id: student.authId!,
                 },
             });
         }
 
         return {
             message: "Student deleted successfully",
+        };
+    }
+
+    async updateStudent(body: UpdateStudent) {
+        const student = await this.prismaService.student.findUnique({
+            where: {
+                id: body.id,
+            },
+        });
+
+        if (!student) {
+            throw new BadRequestException("Student not found");
+        }
+
+        const institution = await this.prismaService.institution.findUnique({
+            where: {
+                id: body.institutionId,
+            },
+        });
+
+        if (!institution) {
+            throw new BadRequestException("Institution not found");
+        }
+
+        const updatedStudent = await this.prismaService.student.update({
+            where: {
+                id: student.id,
+            },
+            data: {
+                firstName: body.firstName,
+                lastName: body.lastName,
+                tc: body.tc,
+                address: body.address,
+                phoneNumber1: body.phoneNumber1,
+                phoneNumber2: body.phoneNumber2,
+                institutionId: institution.id,
+                institutionKey: institution.institutionKey,
+            },
+        });
+
+        if (!updatedStudent) {
+            throw new BadRequestException("Student update failed");
+        }
+        await this.prismaService.permit.update({
+            where: {
+                authId: student.authId ?? undefined,
+            },
+            data: {
+                institutionId: body.institutionId,
+            },
+        });
+
+        const hashedPassword = await this.helperService.toHashPassword(body.tc);
+
+        await this.prismaService.auth.update({
+            where: {
+                id: student.authId ?? undefined,
+            },
+            data: {
+                tc: body.tc,
+                phoneNumber: body.phoneNumber1,
+                password: hashedPassword,
+            },
+        });
+        return {
+            message: "Student updated successfully",
+            updatedStudent,
+        };
+    }
+
+    async updateParent(body: UpdateParent) {
+        const parent = await this.prismaService.parent.findUnique({
+            where: {
+                id: body.id,
+            },
+        });
+
+        if (!parent) {
+            throw new BadRequestException("Parent not found");
+        }
+
+        const updatedParent = await this.prismaService.parent.update({
+            where: {
+                id: parent.id,
+            },
+            data: {
+                firstName: body.parentName,
+                lastName: body.parentLastName,
+                tc: body.parentTc,
+                address: body.parentAddress,
+                phoneNumber1: body.parentNumber1,
+            },
+        });
+
+        if (!updatedParent) {
+            throw new BadRequestException("Parent update failed");
+        }
+
+        return {
+            message: "Parent updated successfully",
+            updatedParent,
         };
     }
 }

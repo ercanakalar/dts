@@ -27,3 +27,25 @@ export type UploadStudentType = {
     parentTc: string;
     institutionId: string;
 };
+
+export type UpdateStudent = {
+    id: string;
+    authId: string;
+    firstName: string;
+    lastName: string;
+    tc: string;
+    address: string;
+    phoneNumber1: string;
+    phoneNumber2?: string;
+    institutionId: string;
+};
+
+export type UpdateParent = {
+    id: string;
+    authId: string;
+    parentName?: string;
+    parentLastName?: string;
+    parentAddress?: string;
+    parentNumber1?: string;
+    parentTc?: string;
+};
