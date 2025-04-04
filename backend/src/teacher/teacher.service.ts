@@ -122,17 +122,26 @@ export class TeacherService {
         if (!teacher) {
             throw new NotFoundException(`Teacher with ID ${id} not found`);
         }
-        try {
-            await this.prismaService.teacher.delete({
+        await this.prismaService.teacher
+            .delete({
                 where: {
                     id,
                 },
+            })
+            .catch(() => {
+                throw new InternalServerErrorException(
+                    `Failed to delete teacher with ID ${id}`,
+                );
             });
-            return {
-                message: "Teacher deleted successfully",
-            };
-        } catch {
-            throw new InternalServerErrorException("Something went wrong");
-        }
+
+        await this.prismaService.auth.delete({
+            where: {
+                id: teacher.authId!,
+            },
+        });
+
+        return {
+            message: "Teacher deleted successfully",
+        };
     }
 }
