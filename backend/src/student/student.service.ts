@@ -12,8 +12,8 @@ export class StudentService {
         private helperService: HelperService,
     ) {}
 
-    async uploadStudents(body: UploadStudentType[], institutionId: string) {
-        return this.createStudents(body, institutionId);
+    async uploadStudents(body: UploadStudentType[]) {
+        return this.createStudents(body, "");
     }
 
     async uploadStudentsWithFile(
@@ -38,14 +38,32 @@ export class StudentService {
         let alreadyInsertedStudentCount = 0;
 
         for (const student of students) {
+            const institution = await this.prismaService.institution.findUnique(
+                {
+                    where: {
+                        id: student.institutionId ?? institutionId,
+                    },
+                },
+            );
+
+            if (!institution) {
+                throw new BadRequestException("Institution not found");
+            }
+
+            const existInstitutionId = institution.id ?? institutionId;
+
             const token = await this.helperService.createToken({
                 tc: student.tc,
-                institutionId,
+                institutionId: existInstitutionId,
             });
 
             const hashedPassword = await this.helperService.toHashPassword(
                 student.phoneNumber1,
             );
+
+            if (!hashedPassword) {
+                throw new BadRequestException("Password hashing failed");
+            }
 
             const auth = await this.prismaService.auth.findUnique({
                 where: {
@@ -73,7 +91,7 @@ export class StudentService {
 
             await this.prismaService.permit.create({
                 data: {
-                    institutionId,
+                    institutionId: existInstitutionId,
                     authId: newAuth.id,
                     roleId: role.id,
                 },
@@ -88,8 +106,8 @@ export class StudentService {
                     address: student.address,
                     phoneNumber1: student.phoneNumber1,
                     phoneNumber2: student.phoneNumber2,
-                    institutionKey: student.institutionKey,
-                    institutionId,
+                    institutionKey: institution.institutionKey,
+                    institutionId: existInstitutionId,
                 },
             });
 
@@ -114,8 +132,8 @@ export class StudentService {
         };
     }
 
-    uploadStudent(student: UploadStudentType, institutionId: string) {
-        return this.createStudents([student], institutionId);
+    uploadStudent(student: UploadStudentType) {
+        return this.createStudents([student], student.institutionId);
     }
 
     async deleteStudent(id: string) {

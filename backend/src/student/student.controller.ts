@@ -4,10 +4,9 @@ import {
     Delete,
     HttpCode,
     HttpStatus,
-    Param,
     Post,
+    Query,
     Req,
-    Request,
     UploadedFile,
     UseGuards,
     UseInterceptors,
@@ -28,12 +27,8 @@ export class StudentController {
     @Post("upload")
     @UseGuards(InstitutionGuard)
     @HttpCode(HttpStatus.OK)
-    async uploadStudents(
-        @Body() body: UploadStudentType[],
-        @Request() req: CustomRequest,
-    ) {
-        const institutionId = req.user.institutionId;
-        return await this.studentsService.uploadStudents(body, institutionId);
+    async uploadStudents(@Body() body: UploadStudentType[]) {
+        return await this.studentsService.uploadStudents(body);
     }
 
     @Post("upload-file")
@@ -54,18 +49,16 @@ export class StudentController {
     @Post("create")
     @UseGuards(InstitutionGuard)
     @HttpCode(HttpStatus.OK)
-    async crateStudent(
-        @Body() body: UploadStudentType,
-        @Request() req: CustomRequest,
-    ) {
-        const institutionId = req.user.institutionId;
-        return await this.studentsService.uploadStudent(body, institutionId);
+    async crateStudent(@Body() body: UploadStudentType) {
+        return await this.studentsService.uploadStudent(body);
     }
 
     @Delete("delete/:id")
     @UseGuards(InstitutionGuard)
     @HttpCode(HttpStatus.OK)
-    async deleteStudent(@Param("id") id: string) {
-        return await this.studentsService.deleteStudent(id);
+    async deleteStudent(@Query() params: { id: string }) {
+        console.log(params);
+
+        return await this.studentsService.deleteStudent(params.id);
     }
 }

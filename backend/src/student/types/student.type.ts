@@ -10,7 +10,7 @@ export type StudentFile = {
     parentAddress: string;
     parentNumber1: string;
     parentTc: string;
-    institutionKey: string;
+    institutionId: string;
 };
 
 export type UploadStudentType = {
@@ -25,5 +25,5 @@ export type UploadStudentType = {
     parentAddress: string;
     parentNumber1: string;
     parentTc: string;
-    institutionKey: string;
+    institutionId: string;
 };
