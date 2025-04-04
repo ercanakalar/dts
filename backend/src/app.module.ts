@@ -12,7 +12,7 @@ import { HelperService } from "./auth/helper/helper.service";
 import { NotificationModule } from "./notification/notification.module";
 import { EmailService } from "./notification/email/email.service";
 
-import { AccessGuard } from "./common/guards/access-guard";
+import { AccessGuard } from "./common/guards/access.guard";
 import { FileManagementService } from "./common/services/file-management/file-management.service";
 
 import { StudentModule } from "./student/student.module";
