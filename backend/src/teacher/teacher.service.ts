@@ -144,4 +144,68 @@ export class TeacherService {
             message: "Teacher deleted successfully",
         };
     }
+
+    async getTeacherById(id: string) {
+        return await this.prismaService.teacher.findUnique({
+            where: {
+                id,
+            },
+            include: {
+                institution: {
+                    select: {
+                        id: true,
+                        name: true,
+                        address: true,
+                        phoneNumber1: true,
+                        phoneNumber2: true,
+                        institutionKey: true,
+                    },
+                },
+                object: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+                classrooms: {
+                    where: {
+                        teacherId: id,
+                    },
+                    include: {
+                        student: true,
+                        absentees: {
+                            where: {
+                                studentId: id,
+                            },
+                            include: {
+                                student: {
+                                    select: {
+                                        id: true,
+                                        firstName: true,
+                                        lastName: true,
+                                        tc: true,
+                                        phoneNumber1: true,
+                                        phoneNumber2: true,
+                                        address: true,
+                                        institutionId: true,
+                                        institutionKey: true,
+                                        institution: {
+                                            select: {
+                                                id: true,
+                                                name: true,
+                                                address: true,
+                                                phoneNumber1: true,
+                                                phoneNumber2: true,
+                                                institutionKey: true,
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        });
+    }
 }

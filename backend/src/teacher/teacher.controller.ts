@@ -2,8 +2,10 @@ import {
     Body,
     Controller,
     Delete,
+    Get,
     HttpCode,
     HttpStatus,
+    Param,
     Post,
     Put,
     Query,
@@ -34,7 +36,14 @@ export class TeacherController {
     @Delete("delete")
     @UseGuards(InstitutionGuard)
     @HttpCode(HttpStatus.OK)
-    async deleteStudent(@Query() params: { id: string }) {
+    async deleteTeacher(@Query() params: { id: string }) {
         return await this.teacherService.deleteTeacher(params.id);
+    }
+
+    @Get("/:id")
+    @UseGuards(InstitutionGuard)
+    @HttpCode(HttpStatus.OK)
+    async getTeacherById(@Param() params: { id: string }) {
+        return await this.teacherService.getTeacherById(params.id);
     }
 }
