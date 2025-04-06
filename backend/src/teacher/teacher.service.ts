@@ -173,10 +173,7 @@ export class TeacherService {
                     },
                     include: {
                         student: true,
-                        absentees: {
-                            where: {
-                                studentId: id,
-                            },
+                        absenteeismDetails: {
                             include: {
                                 student: {
                                     select: {
