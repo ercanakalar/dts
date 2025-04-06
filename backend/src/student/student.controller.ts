@@ -60,12 +60,6 @@ export class StudentController {
     async crateStudent(@Body() body: UploadStudentType) {
         return await this.studentsService.uploadStudent(body);
     }
-    @Post("create-parent")
-    @UseGuards(InstitutionGuard)
-    @HttpCode(HttpStatus.OK)
-    async crateParent(@Body() body: Parent) {
-        return await this.studentsService.crateParent(body);
-    }
 
     @Delete("delete")
     @UseGuards(InstitutionGuard)
@@ -80,6 +74,14 @@ export class StudentController {
     async updateStudent(@Body() body: UpdateStudent) {
         return await this.studentsService.updateStudent(body);
     }
+
+    @Post("create-parent")
+    @UseGuards(InstitutionGuard)
+    @HttpCode(HttpStatus.OK)
+    async crateParent(@Body() body: Parent) {
+        return await this.studentsService.crateParent(body);
+    }
+
     @Patch("update-parent")
     @UseGuards(InstitutionGuard)
     @HttpCode(HttpStatus.OK)

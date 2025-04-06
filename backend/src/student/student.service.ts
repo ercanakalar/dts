@@ -5,11 +5,13 @@ import { HelperService } from "src/auth/helper/helper.service";
 import { PrismaService } from "src/prisma/prisma.service";
 import {
     Parent,
+    Student,
     StudentFile,
     UpdateParent,
     UpdateStudent,
     UploadStudentType,
 } from "./types/student.type";
+import { Prisma } from "@prisma/client";
 
 @Injectable()
 export class StudentService {
@@ -116,6 +118,8 @@ export class StudentService {
                     institutionId: existInstitutionId,
                 },
             });
+
+            await this.createAbsenteeism(newStudent);
 
             await this.prismaService.parent.create({
                 data: {
@@ -340,6 +344,7 @@ export class StudentService {
                 address: body.address,
                 phoneNumber1: body.phoneNumber1,
                 studentId: student.id,
+                authId: newAuth.id,
             },
         });
 
@@ -355,7 +360,11 @@ export class StudentService {
                 id,
             },
             include: {
-                absentees: true,
+                absentees: {
+                    include: {
+                        absenteeismDetails: true,
+                    },
+                },
                 parents: {
                     select: {
                         id: true,
@@ -380,7 +389,11 @@ export class StudentService {
                     include: {
                         classDetails: true,
                         teacher: true,
-                        absentees: true,
+                        absenteeismDetails: {
+                            include: {
+                                absenteeism: true,
+                            },
+                        },
                     },
                 },
             },
@@ -393,6 +406,33 @@ export class StudentService {
         return {
             message: "Student retrieved successfully",
             student,
+        };
+    }
+
+    async createAbsenteeism(student: Student) {
+        const absenteeismRecords: Prisma.AbsenteeismCreateManyInput[] = [];
+
+        for (let i = 0; i < 12; i++) {
+            const date = new Date();
+            date.setMonth(date.getMonth() + i);
+            absenteeismRecords.push({
+                date: new Date(date),
+                joined: 0,
+                absent: 0,
+                scheduled: 0,
+                totalCount: 8,
+                studentId: student.id,
+                institutionId: student.institutionId,
+            });
+        }
+
+        await this.prismaService.absenteeism.createMany({
+            data: absenteeismRecords,
+        });
+
+        return {
+            message: "Absenteeism created successfully",
+            absenteeismRecords,
         };
     }
 }

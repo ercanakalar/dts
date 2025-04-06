@@ -1,3 +1,18 @@
+export type Student = {
+    id: string;
+    authId: string | null;
+    firstName: string;
+    lastName: string;
+    tc: string;
+    address: string;
+    phoneNumber1: string;
+    createdAt: Date;
+    updatedAt: Date;
+    phoneNumber2: string;
+    institutionKey: string;
+    institutionId: string;
+};
+
 export type StudentFile = {
     firstName: string;
     lastName: string;
