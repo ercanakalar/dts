@@ -7,7 +7,7 @@ import {
     UpdateClassDetails,
     UpdateClassroom,
 } from "./types/classroom.type";
-import { ClassroomStatus } from "@prisma/client";
+import { AbsenteeismStatus, ClassroomStatus } from "@prisma/client";
 
 @Injectable()
 export class ClassroomService {
@@ -15,13 +15,13 @@ export class ClassroomService {
 
     async createClassroom(body: Classroom) {
         const existingClassDetail =
-            await this.prismaService.classDetails.findFirst({
+            await this.prismaService.classDetails.findUnique({
                 where: {
-                    classNo: body.classDetailsId,
+                    id: body.classDetailsId,
                 },
             });
 
-        if (existingClassDetail) {
+        if (!existingClassDetail) {
             throw new ConflictException(
                 "Classroom with this class number already exists",
             );
@@ -43,6 +43,35 @@ export class ClassroomService {
             );
         }
 
+        const absenteeism = await this.prismaService.absenteeism.findFirst({
+            where: {
+                AND: [
+                    {
+                        date: {
+                            gte: new Date(
+                                new Date(body.classDate).getFullYear(),
+                                new Date(body.classDate).getMonth(),
+                                1,
+                            ),
+                            lte: new Date(
+                                new Date(body.classDate).getFullYear(),
+                                new Date(body.classDate).getMonth() + 1,
+                                0,
+                            ),
+                        },
+                    },
+                    { studentId: body.studentId },
+                    { institutionId: body.institutionId },
+                ],
+            },
+        });
+
+        if (!absenteeism || absenteeism.scheduled === 8) {
+            throw new ConflictException(
+                "Absenteeism with this date does not exist",
+            );
+        }
+
         const newClassroom = await this.prismaService.classroom.create({
             data: {
                 classDate: body.classDate,
@@ -58,22 +87,125 @@ export class ClassroomService {
             },
         });
 
+        if (!newClassroom) {
+            throw new ConflictException(
+                "Error creating classroom: " + newClassroom,
+            );
+        }
+
+        await this.prismaService.absenteeism.update({
+            where: {
+                id: absenteeism.id,
+            },
+            data: {
+                scheduled: absenteeism.scheduled + 1,
+                updatedAt: new Date(),
+            },
+        });
+
+        await this.prismaService.absenteeismDetails.create({
+            data: {
+                date: body.classDate,
+                status: AbsenteeismStatus[
+                    body.status as keyof typeof AbsenteeismStatus
+                ],
+                absenteeismId: absenteeism.id,
+                studentId: body.studentId,
+                classroomId: newClassroom.id,
+                institutionId: body.institutionId,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            },
+        });
+
         return {
             message: "Classroom created successfully",
             data: newClassroom,
         };
     }
     async updateClassroom(body: UpdateClassroom) {
-        const existingClassroom = await this.prismaService.classroom.findFirst({
-            where: {
-                classDetailsId: body.classDetailsId,
+        const existingClassroom = await this.prismaService.classroom.findUnique(
+            {
+                where: {
+                    id: body.id,
+                },
+                include: {
+                    absenteeismDetails: true,
+                },
             },
-        });
+        );
 
         if (!existingClassroom) {
             throw new ConflictException(
                 "Classroom with this class number does not exist",
             );
+        }
+
+        const existingClassDetail =
+            await this.prismaService.absenteeismDetails.findUnique({
+                where: {
+                    classroomId: existingClassroom.id,
+                },
+                include: {
+                    absenteeism: true,
+                },
+            });
+
+        if (!existingClassDetail) {
+            throw new ConflictException(
+                "Absenteeism with this date does not exist",
+            );
+        }
+
+        const newStatus =
+            body.status === "COMPLETED"
+                ? AbsenteeismStatus.JOINED
+                : body.status === "CANCELED"
+                  ? AbsenteeismStatus.NOT_JOINED
+                  : body.status === "SCHEDULED"
+                    ? AbsenteeismStatus.SCHEDULED
+                    : existingClassDetail.status;
+
+        if (
+            existingClassDetail.absenteeism &&
+            newStatus !== existingClassDetail.status
+        ) {
+            await this.prismaService.absenteeismDetails.update({
+                where: {
+                    id: existingClassDetail.id,
+                },
+                data: {
+                    status: newStatus,
+                    updatedAt: new Date(),
+                },
+            });
+            await this.prismaService.absenteeism.update({
+                where: {
+                    id: existingClassDetail.absenteeismId!,
+                },
+
+                data: {
+                    scheduled:
+                        newStatus === AbsenteeismStatus.SCHEDULED
+                            ? existingClassDetail.absenteeism.scheduled + 1
+                            : existingClassDetail.absenteeism.scheduled > 0
+                              ? existingClassDetail.absenteeism.scheduled - 1
+                              : 0,
+                    joined:
+                        newStatus === AbsenteeismStatus.JOINED
+                            ? existingClassDetail.absenteeism.joined + 1
+                            : existingClassDetail.absenteeism.joined > 0
+                              ? existingClassDetail.absenteeism.joined - 1
+                              : 0,
+                    absent:
+                        newStatus === AbsenteeismStatus.NOT_JOINED
+                            ? existingClassDetail.absenteeism.absent + 1
+                            : existingClassDetail.absenteeism.absent > 0
+                              ? existingClassDetail.absenteeism.absent - 1
+                              : 0,
+                    updatedAt: new Date(),
+                },
+            });
         }
 
         const updatedClassroom = await this.prismaService.classroom.update({
@@ -93,8 +225,14 @@ export class ClassroomService {
                 classDetailsId: body.classDetailsId,
                 updatedAt: new Date(),
             },
+            include: {
+                absenteeismDetails: {
+                    where: {
+                        id: existingClassDetail.id,
+                    },
+                },
+            },
         });
-
         return {
             message: "Classroom updated successfully",
             data: updatedClassroom,
@@ -102,16 +240,75 @@ export class ClassroomService {
     }
 
     async deleteClassroom(id: string) {
-        const existingClassroom = await this.prismaService.classroom.findFirst({
-            where: {
-                id,
+        const existingClassroom = await this.prismaService.classroom.findUnique(
+            {
+                where: {
+                    id,
+                },
+                include: {
+                    absenteeismDetails: {
+                        include: {
+                            absenteeism: true,
+                        },
+                    },
+                },
             },
-        });
+        );
 
         if (!existingClassroom) {
             throw new ConflictException(
                 "Classroom with this ID does not exist",
             );
+        }
+
+        if (
+            existingClassroom.absenteeismDetails &&
+            existingClassroom.absenteeismDetails.absenteeism &&
+            existingClassroom.absenteeismDetails.absenteeismId
+        ) {
+            await this.prismaService.absenteeismDetails
+                .delete({
+                    where: {
+                        id: existingClassroom.absenteeismDetails.id,
+                    },
+                })
+                .catch((error) => {
+                    throw new ConflictException(
+                        "Error deleting absenteeism details: " + error.message,
+                    );
+                });
+            await this.prismaService.absenteeism
+                .update({
+                    where: {
+                        id: existingClassroom.absenteeismDetails.absenteeismId,
+                    },
+                    data: {
+                        scheduled:
+                            existingClassroom.absenteeismDetails.absenteeism
+                                .scheduled > 0
+                                ? existingClassroom.absenteeismDetails
+                                      .absenteeism.scheduled - 1
+                                : 0,
+                        joined:
+                            existingClassroom.absenteeismDetails.absenteeism
+                                .joined > 0
+                                ? existingClassroom.absenteeismDetails
+                                      .absenteeism.joined - 1
+                                : 0,
+                        absent:
+                            existingClassroom.absenteeismDetails.absenteeism
+                                .absent > 0
+                                ? existingClassroom.absenteeismDetails
+                                      .absenteeism.absent - 1
+                                : 0,
+                        updatedAt: new Date(),
+                    },
+                })
+                .catch((error) => {
+                    throw new ConflictException(
+                        "Error updating absenteeism: " + error.message,
+                    );
+                });
         }
 
         await this.prismaService.classroom
