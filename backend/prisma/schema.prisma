@@ -22,20 +22,22 @@ model Auth {
 }
 
 model Institution {
-  id             String         @id @default(uuid())
-  name           String
-  address        String
-  phoneNumber1   String
-  phoneNumber2   String
-  institutionKey String
-  teachers       Teacher[]
-  drivers        Driver[]
-  students       Student[]
-  permit         Permit[]
-  classDetails   ClassDetails[]
-  classroom      Classroom[]
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @default(now()) @updatedAt
+  id                 String               @id @default(uuid())
+  name               String
+  address            String
+  phoneNumber1       String
+  phoneNumber2       String
+  institutionKey     String
+  teachers           Teacher[]
+  drivers            Driver[]
+  students           Student[]
+  permit             Permit[]
+  classDetails       ClassDetails[]
+  classroom          Classroom[]
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @default(now()) @updatedAt
+  Absenteeism        Absenteeism[]
+  AbsenteeismDetails AbsenteeismDetails[]
 }
 
 model Parent {
@@ -53,23 +55,24 @@ model Parent {
 }
 
 model Student {
-  id             String        @id @default(uuid())
-  authId         String?
-  firstName      String
-  lastName       String
-  tc             String        @unique
-  address        String
-  phoneNumber1   String
-  phoneNumber2   String
-  institutionKey String
-  classrooms     Classroom[]
-  absentees      Absenteeism[]
-  waypoint       Waypoint[]
-  institution    Institution?  @relation(fields: [institutionId], references: [id])
-  institutionId  String
-  parents        Parent[]
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @default(now()) @updatedAt
+  id                 String               @id @default(uuid())
+  authId             String?
+  firstName          String
+  lastName           String
+  tc                 String               @unique
+  address            String
+  phoneNumber1       String
+  phoneNumber2       String
+  institutionKey     String
+  classrooms         Classroom[]
+  absentees          Absenteeism[]
+  waypoint           Waypoint[]
+  institution        Institution?         @relation(fields: [institutionId], references: [id])
+  institutionId      String
+  parents            Parent[]
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @default(now()) @updatedAt
+  absenteeismDetails AbsenteeismDetails[]
 }
 
 model Teacher {
@@ -101,22 +104,22 @@ model Subject {
 }
 
 model Classroom {
-  id             String          @id @default(uuid())
-  startClass     DateTime
-  endClass       DateTime
-  classDate      DateTime
-  status         ClassroomStatus
-  absentees      Absenteeism[]
-  institutionId  String
-  institution    Institution?    @relation(fields: [institutionId], references: [id])
-  classDetailsId String
-  classDetails   ClassDetails    @relation(fields: [classDetailsId], references: [id])
-  teacherId      String
-  teacher        Teacher         @relation(fields: [teacherId], references: [id])
-  studentId      String
-  student        Student         @relation(fields: [studentId], references: [id])
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @default(now()) @updatedAt
+  id                 String              @id @default(uuid())
+  startClass         DateTime
+  endClass           DateTime
+  classDate          DateTime
+  status             ClassroomStatus
+  institutionId      String
+  institution        Institution?        @relation(fields: [institutionId], references: [id])
+  classDetailsId     String
+  classDetails       ClassDetails        @relation(fields: [classDetailsId], references: [id])
+  teacherId          String
+  teacher            Teacher             @relation(fields: [teacherId], references: [id])
+  studentId          String
+  student            Student             @relation(fields: [studentId], references: [id])
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @default(now()) @updatedAt
+  absenteeismDetails AbsenteeismDetails?
 }
 
 model ClassDetails {
@@ -131,17 +134,35 @@ model ClassDetails {
 }
 
 model Absenteeism {
-  id          String     @id @default(uuid())
-  classDate   String
-  joined      Boolean
-  notJoined   Boolean
-  totalCount  Int
-  studentId   String
-  student     Student    @relation(fields: [studentId], references: [id])
-  classroomId String?
-  classroom   Classroom? @relation(fields: [classroomId], references: [id])
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @default(now()) @updatedAt
+  id                 String               @id @default(uuid())
+  date               DateTime
+  joined             Int
+  absent             Int
+  scheduled          Int
+  totalCount         Int
+  studentId          String
+  student            Student              @relation(fields: [studentId], references: [id])
+  institutionId      String
+  institution        Institution?         @relation(fields: [institutionId], references: [id])
+  absenteeismDetails AbsenteeismDetails[]
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @default(now()) @updatedAt
+}
+
+model AbsenteeismDetails {
+  id            String            @id @default(uuid())
+  date          DateTime
+  status        AbsenteeismStatus
+  studentId     String
+  student       Student           @relation(fields: [studentId], references: [id])
+  classroomId   String            @unique
+  classroom     Classroom         @relation(fields: [classroomId], references: [id])
+  absenteeismId String?
+  absenteeism   Absenteeism?      @relation(fields: [absenteeismId], references: [id])
+  institutionId String
+  institution   Institution?      @relation(fields: [institutionId], references: [id])
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @default(now()) @updatedAt
 }
 
 model Driver {
@@ -208,7 +229,12 @@ model Permit {
 
 enum ClassroomStatus {
   SCHEDULED
-  ONGOING
   COMPLETED
   CANCELED
+}
+
+enum AbsenteeismStatus {
+  SCHEDULED
+  JOINED
+  NOT_JOINED
 }
