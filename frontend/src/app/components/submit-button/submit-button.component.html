@@ -1,0 +1,13 @@
+<button
+  class="w-full text-sm px-5 py-2.5 text-white font-medium bg-blue-600 hover:bg-blue-800"
+  [ngClass]="customClass ? customClass : ''"
+  [disabled]="isLoading || disabled"
+  (click)="handleClick()"
+  [type]="type"
+>
+  @if (isLoading) {
+    <app-loader> {{ label }} </app-loader>
+  } @else {
+    {{ label }}
+  }
+</button>

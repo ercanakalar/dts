@@ -1,0 +1,110 @@
+<div class="flex justify-center items-center w-full h-screen">
+  <div
+    class="2xl:w-1/6 h-max rounded-md bg-white drop-shadow-2xl shadow-2xl px-4"
+  >
+    <form [formGroup]="signupForm" (ngSubmit)="signup()">
+      <p class="text-center py-6 font-extrabold text-2xl">Sign Up</p>
+      <div class="flex flex-col gap-2">
+        <app-auth-input
+          label="First Name"
+          placeholder="Type your First Name"
+          src="assets/icons/user.svg"
+          type="text"
+          (changeText)="changeText('firstName', $event)"
+          [error]="
+            hasError('firstName', 'required')
+              ? 'First Name is required'
+              : hasError('firstName', 'minlength')
+                ? 'Minimum 3 characters'
+                : ''
+          "
+        ></app-auth-input>
+
+        <app-auth-input
+          label="Last Name"
+          placeholder="Type your Last  Name"
+          src="assets/icons/user.svg"
+          type="text"
+          (changeText)="changeText('lastName', $event)"
+          [error]="
+            hasError('lastName', 'required')
+              ? 'Last Name is required'
+              : hasError('lastName', 'minlength')
+                ? 'Minimum 3 characters'
+                : ''
+          "
+        ></app-auth-input>
+
+        <app-auth-input
+          label="Email"
+          placeholder="Type your Email"
+          src="assets/icons/email.svg"
+          type="email"
+          (changeText)="changeText('email', $event)"
+          [error]="
+            hasError('email', 'required')
+              ? 'Email is required'
+              : hasError('email', 'minlength')
+                ? 'Minimum 6 characters'
+                : ''
+          "
+        ></app-auth-input>
+
+        <app-auth-input
+          label="Password"
+          placeholder="Type your Password"
+          src="assets/icons/password.svg"
+          type="password"
+          (changeText)="changeText('password', $event)"
+          [error]="
+            hasError('password', 'required')
+              ? 'Password is required'
+              : hasError('password', 'minlength')
+                ? 'Minimum 6 characters'
+                : hasPasswordMismatch()
+                  ? 'Passwords do not match'
+                  : ''
+          "
+        ></app-auth-input>
+
+        <app-auth-input
+          label="Confirm Password"
+          placeholder="Type your Confirm Password"
+          src="assets/icons/password.svg"
+          type="password"
+          (changeText)="changeText('confirmPassword', $event)"
+          [error]="
+            hasError('confirmPassword', 'required')
+              ? 'Confirm Password is required'
+              : hasError('confirmPassword', 'minlength')
+                ? 'Minimum 6 characters'
+                : hasPasswordMismatch()
+                  ? 'Passwords do not match'
+                  : ''
+          "
+        ></app-auth-input>
+
+        <div class="flex justify-end pr-6 pt-2">
+          <a
+            href="/forgot-password"
+            class="text-gray-600/80 font-medium text-xs hover:text-blue-600"
+            >Forgot password?</a
+          >
+        </div>
+
+        <div class="px-5 mt-6">
+          <app-submit-button
+            label="Sign Up"
+            type="submit"
+            customClass="px-5 rounded-full bg-gradient-to-r from-blue-500 to-pink-500 bg-[length:200%_200%] bg-left animate-gradient-reset hover:animate-gradient-move hover:bg-right shadow-lg transition-all focus:outline-none"
+          ></app-submit-button>
+        </div>
+      </div>
+    </form>
+    <div
+      class="p-6 text-center font-medium text-xs text-gray-600/80 hover:text-blue-600"
+    >
+      <a href="/login"> I do not have an account. </a>
+    </div>
+  </div>
+</div>

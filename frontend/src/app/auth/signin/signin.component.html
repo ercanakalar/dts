@@ -1,0 +1,61 @@
+<div class="flex justify-center items-center w-full h-screen">
+  <div
+    class="2xl:w-1/6 h-1/2 rounded-md bg-white drop-shadow-2xl shadow-2xl px-4"
+  >
+    <form [formGroup]="loginForm" (ngSubmit)="login()">
+      <p class="text-center py-6 font-extrabold text-2xl">Login</p>
+      <div class="flex flex-col gap-4">
+        <app-auth-input
+          label="Email"
+          placeholder="Type your email"
+          src="assets/icons/email.svg"
+          type="email"
+          (changeText)="changeText('email', $event)"
+          [error]="
+            hasError('email', 'required')
+              ? 'Email is required'
+              : hasError('email', 'minlength')
+                ? 'Minimum 3 characters'
+                : ''
+          "
+        ></app-auth-input>
+
+        <app-auth-input
+          label="Password"
+          placeholder="Type your password"
+          src="assets/icons/password.svg"
+          type="password"
+          (changeText)="changeText('password', $event)"
+          [error]="
+            hasError('password', 'required')
+              ? 'Password is required'
+              : hasError('password', 'minlength')
+                ? 'Minimum 6 characters'
+                : ''
+          "
+        ></app-auth-input>
+
+        <div class="flex justify-end pr-6 pt-2">
+          <a
+            href="/forgot-password"
+            class="text-gray-600/80 font-medium text-xs hover:text-blue-600"
+            >Forgot password?</a
+          >
+        </div>
+
+        <div class="px-5 mt-6">
+          <app-submit-button
+            label="Login"
+            type="submit"
+            customClass="px-5 rounded-full bg-gradient-to-r from-blue-500 to-pink-500 bg-[length:200%_200%] bg-left animate-gradient-reset hover:animate-gradient-move hover:bg-right shadow-lg transition-all focus:outline-none"
+          ></app-submit-button>
+        </div>
+      </div>
+    </form>
+    <div
+      class="pt-6 text-center font-medium text-xs text-gray-600/80 hover:text-blue-600"
+    >
+      <a href="/signup"> I do not have an account. </a>
+    </div>
+  </div>
+</div>

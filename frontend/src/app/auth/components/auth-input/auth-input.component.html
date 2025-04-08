@@ -1,0 +1,35 @@
+<div class="flex flex-col px-3">
+  <label class="text-sm font-medium text-gray-800/60"> {{ label }} </label>
+  <div class="relative overflow-hidden">
+    <div class="pl-2">
+      <img class="absolute top-1/3 w-3 h-3 opacity-60" [src]="src" />
+    </div>
+
+    <div
+      class="absolute bottom-0 left-0 h-0.5 w-full"
+      [ngClass]="{
+        'w-full animate-slide-border bg-gradient-to-r from-blue-500 to-purple-500':
+          isFocused && !error,
+        'w-full bg-red-600': error,
+        'w-0': !isFocused && !error,
+      }"
+    >
+      @if (error) {
+        <div class="absolute bottom-0 text-xs text-red-600">{{ error }}</div>
+      }
+    </div>
+
+    <input
+      class="border-b-2 outline-none pl-8 py-2 placeholder:text-sm placeholder:font-medium placeholder:text-gray-800/30 border-gray-800/20"
+      [ngClass]="{
+        'placeholder:py-1': isFocused,
+        'placeholder:py-2': !isFocused,
+      }"
+      [type]="type"
+      [placeholder]="placeholder"
+      (focus)="onFocus()"
+      (blur)="onBlur()"
+      (change)="onChange($event)"
+    />
+  </div>
+</div>

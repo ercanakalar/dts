@@ -1,0 +1,15 @@
+@if (notification) {
+  <div
+    class="absolute bottom-4 right-4 lg:w-64 xl:w-80 2xl:w-96 p-4 mx-auto break-words my-2 rounded-md text-white flex justify-center items-center cursor-pointer transition-all animate-fade-out"
+    [ngClass]="{
+      'bg-green-500': notification.type === 'success',
+      'bg-red-500': notification.type === 'error',
+      'bg-yellow-500': notification.type === 'warning',
+      'bg-blue-500': notification.type === 'info',
+      'fade-out': isFadingOut,
+    }"
+    (click)="close()"
+  >
+    <p class="text-white font-semibold">{{ notification.content }}</p>
+  </div>
+}
