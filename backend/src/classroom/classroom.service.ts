@@ -30,9 +30,30 @@ export class ClassroomService {
         const existingClassroom = await this.prismaService.classroom.findFirst({
             where: {
                 AND: [
-                    { classDate: body.classDate },
-                    { startClass: body.startClass },
-                    { endClass: body.endClass },
+                    { studentId: body.studentId },
+                    { institutionId: body.institutionId },
+                    {
+                        classDate: {
+                            gte: new Date(
+                                new Date(body.classDate).getFullYear(),
+                                new Date(body.classDate).getMonth(),
+                                new Date(body.classDate).getDay(),
+                                0,
+                                0,
+                                0,
+                                0,
+                            ),
+                            lte: new Date(
+                                new Date(body.classDate).getFullYear(),
+                                new Date(body.classDate).getMonth() + 1,
+                                0,
+                                23,
+                                59,
+                                59,
+                                999,
+                            ),
+                        },
+                    },
                 ],
             },
         });
@@ -46,22 +67,30 @@ export class ClassroomService {
         const absenteeism = await this.prismaService.absenteeism.findFirst({
             where: {
                 AND: [
+                    { studentId: body.studentId },
+                    { institutionId: body.institutionId },
                     {
                         date: {
                             gte: new Date(
                                 new Date(body.classDate).getFullYear(),
                                 new Date(body.classDate).getMonth(),
-                                1,
+                                new Date(body.classDate).getDay(),
+                                0,
+                                0,
+                                0,
+                                0,
                             ),
                             lte: new Date(
                                 new Date(body.classDate).getFullYear(),
                                 new Date(body.classDate).getMonth() + 1,
                                 0,
+                                23,
+                                59,
+                                59,
+                                999,
                             ),
                         },
                     },
-                    { studentId: body.studentId },
-                    { institutionId: body.institutionId },
                 ],
             },
         });

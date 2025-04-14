@@ -147,6 +147,8 @@ model Absenteeism {
   absenteeismDetails AbsenteeismDetails[]
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @default(now()) @updatedAt
+
+  @@unique([studentId, date])
 }
 
 model AbsenteeismDetails {
