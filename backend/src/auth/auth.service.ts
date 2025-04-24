@@ -34,10 +34,11 @@ export class AuthService {
             throw new NotFoundException("Kurum bulunamadı.");
         }
 
-        const token = await this.helperService.createToken({
-            tc: user.tc,
-            institutionId: institution.id,
-        });
+        const { accessToken, refreshToken } =
+            await this.helperService.generateTokens({
+                tc: user.tc,
+                institutionId: institution.id,
+            });
 
         const role = await this.prismaService.role.findUnique({
             where: {
@@ -58,7 +59,8 @@ export class AuthService {
                     tc: user.tc,
                     phoneNumber: user.phoneNumber,
                     password: hashedPassword,
-                    accessToken: token,
+                    accessToken,
+                    refreshToken,
                 },
             })
             .catch(() => {
@@ -73,7 +75,7 @@ export class AuthService {
             },
         });
 
-        return { accessToken: token };
+        return { accessToken, refreshToken };
     }
 
     async login(user: LoginUser) {
@@ -116,22 +118,28 @@ export class AuthService {
             foundUser.accessToken,
         );
 
-        const token = await this.helperService.createToken({
-            tc: foundUser.tc,
-            institutionId: verified.institutionId,
-            permitId: foundUser?.permit?.id,
-        });
+        if (!verified) {
+            throw new UnauthorizedException("Token geçersiz.");
+        }
+
+        const { accessToken, refreshToken } =
+            await this.helperService.generateTokens({
+                tc: foundUser.tc,
+                institutionId: verified.institutionId,
+                permitId: foundUser?.permit?.id,
+            });
 
         await this.prismaService.auth.update({
             where: {
                 id: foundUser.id,
             },
             data: {
-                accessToken: token,
+                accessToken,
+                refreshToken,
             },
         });
 
-        return { accessToken: token };
+        return { accessToken, refreshToken };
     }
 
     async getUserById(id: string, institutionId: string) {
@@ -218,5 +226,25 @@ export class AuthService {
         });
 
         return { message: "Rol başarıyla verildi." };
+    }
+
+    async verifyRefreshToken(refreshToken: string) {
+        const payload = await this.helperService.verifyToken(refreshToken);
+        const user = await this.prismaService.auth.findFirst({
+            where: { refreshToken },
+        });
+
+        if (!user) {
+            throw new UnauthorizedException("Geçersiz refresh token.");
+        }
+
+        return payload;
+    }
+
+    async updateRefreshToken(tc: string, refreshToken: string) {
+        await this.prismaService.auth.updateMany({
+            where: { tc },
+            data: { refreshToken },
+        });
     }
 }

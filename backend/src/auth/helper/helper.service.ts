@@ -90,6 +90,12 @@ export class HelperService {
         );
     }
 
+    public async generateTokens(payload: any) {
+        const accessToken = await this.createToken(payload);
+        const refreshToken = await this.createToken(payload);
+        return { accessToken, refreshToken };
+    }
+
     async checkExpiredToken(token: string) {
         try {
             const payload = await this.jwtService.verifyAsync(token, {
