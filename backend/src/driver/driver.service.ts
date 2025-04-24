@@ -159,4 +159,22 @@ export class DriverService {
             message: "Driver deleted successfully",
         };
     }
+
+    async getDriverById(id: string) {
+        const driver = await this.prismaService.driver.findUnique({
+            where: {
+                id,
+            },
+            include: {
+                institution: true,
+                routes: true,
+                waypoint: true,
+            },
+        });
+        if (!driver) {
+            throw new NotFoundException(`Driver with ID ${id} not found`);
+        }
+
+        return driver;
+    }
 }

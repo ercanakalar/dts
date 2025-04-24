@@ -2,8 +2,10 @@ import {
     Body,
     Controller,
     Delete,
+    Get,
     HttpCode,
     HttpStatus,
+    Param,
     Post,
     Put,
     Query,
@@ -36,5 +38,12 @@ export class DriverController {
     @HttpCode(HttpStatus.OK)
     async deleteDriver(@Query() params: { id: string }) {
         return await this.driverService.deleteDriver(params.id);
+    }
+
+    @Get("/:id")
+    @UseGuards(InstitutionGuard)
+    @HttpCode(HttpStatus.OK)
+    async getTeacherById(@Param() params: { id: string }) {
+        return await this.driverService.getDriverById(params.id);
     }
 }
