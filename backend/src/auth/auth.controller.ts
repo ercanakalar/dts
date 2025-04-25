@@ -10,11 +10,17 @@ import {
     UseGuards,
 } from "@nestjs/common";
 import { Public } from "src/common/decorators";
-import { CreateUser, GiveRole, LoginUser } from "./types/auth.types";
+import {
+    CreateUser,
+    DecodedToken,
+    GiveRole,
+    LoginUser,
+} from "./types/auth.types";
 import { AuthService } from "./auth.service";
 import { UserExistsGuard } from "src/common/guards/user-exists/user-exists.guard";
 import { AdminGuard } from "src/common/guards/admin/admin.guard";
 import { HelperService } from "./helper/helper.service";
+import { RefreshGuard } from "src/common/guards/refresh.guard";
 
 @Controller("api/user")
 export class AuthController {
@@ -53,18 +59,20 @@ export class AuthController {
         return await this.authService.giveRole(body);
     }
 
-    @Post("refresh")
     @Public()
+    @UseGuards(RefreshGuard)
+    @Post("refresh")
     @HttpCode(HttpStatus.OK)
     async refresh(@Body() body: { refreshToken: string }) {
         const { refreshToken: inputRefreshToken } = body;
 
-        const payload: any =
+        const { iat, exp, ...rest }: DecodedToken =
             await this.authService.verifyRefreshToken(inputRefreshToken);
-        const { accessToken, refreshToken } =
-            await this.helperService.generateTokens(payload);
 
-        await this.authService.updateRefreshToken(payload.tc, refreshToken);
+        const { accessToken, refreshToken } =
+            await this.helperService.generateTokens(rest);
+
+        await this.authService.updateRefreshToken(rest.tc, refreshToken);
 
         return { accessToken, refreshToken };
     }

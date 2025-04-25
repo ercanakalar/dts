@@ -27,10 +27,11 @@ export class DriverService {
             );
         }
 
-        const token = await this.helperService.createToken({
-            tc: body.tc,
-            institutionId: institution.id,
-        });
+        const { accessToken, refreshToken } =
+            await this.helperService.generateTokens({
+                tc: body.tc,
+                institutionId: institution.id,
+            });
 
         const hashedPassword = await this.helperService.toHashPassword(body.tc);
         if (!hashedPassword) {
@@ -52,7 +53,8 @@ export class DriverService {
                     tc: body.tc,
                     phoneNumber: body.phoneNumber1,
                     password: hashedPassword,
-                    accessToken: token,
+                    accessToken,
+                    refreshToken,
                 },
             })
             .catch(() => {

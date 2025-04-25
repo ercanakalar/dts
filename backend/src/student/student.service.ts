@@ -60,10 +60,11 @@ export class StudentService {
 
             const existInstitutionId = institution.id ?? institutionId;
 
-            const token = await this.helperService.createToken({
-                tc: student.tc,
-                institutionId: existInstitutionId,
-            });
+            const { accessToken, refreshToken } =
+                await this.helperService.generateTokens({
+                    tc: student.tc,
+                    institutionId: existInstitutionId,
+                });
 
             const hashedPassword = await this.helperService.toHashPassword(
                 student.phoneNumber1,
@@ -89,7 +90,8 @@ export class StudentService {
                     tc: student.tc,
                     phoneNumber: student.phoneNumber1,
                     password: hashedPassword,
-                    accessToken: token,
+                    accessToken,
+                    refreshToken,
                 },
             });
 
@@ -294,10 +296,12 @@ export class StudentService {
             throw new BadRequestException("Student not found");
         }
 
-        const token = await this.helperService.createToken({
-            tc: body.tc,
-            institutionId: student.institutionId,
-        });
+        const { accessToken, refreshToken } =
+            await this.helperService.generateTokens({
+                studentId: student.id,
+                tc: body.tc,
+                institutionId: student.institutionId,
+            });
 
         const hashedPassword = await this.helperService.toHashPassword(body.tc);
 
@@ -320,7 +324,8 @@ export class StudentService {
                 tc: body.tc,
                 phoneNumber: body.phoneNumber1,
                 password: hashedPassword,
-                accessToken: token,
+                accessToken,
+                refreshToken,
             },
         });
 

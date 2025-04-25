@@ -41,9 +41,15 @@ export class HelperService {
         return buf.toString("hex") === hashedPassword;
     }
 
-    async verifyToken(token: string): Promise<DecodedToken> {
+    async verifyAccessToken(token: string): Promise<DecodedToken> {
         return this.jwtService.verifyAsync(token, {
-            secret: this.configService.get("SECRET_KEY"),
+            secret: this.configService.get("ACCESS_KEY"),
+        });
+    }
+
+    async verifyRefreshToken(token: string): Promise<DecodedToken> {
+        return this.jwtService.verifyAsync(token, {
+            secret: this.configService.get("REFRESH_KEY"),
         });
     }
 
@@ -72,7 +78,7 @@ export class HelperService {
         return futureDate;
     }
 
-    async createToken(data: {
+    async createAccessToken(data: {
         tc: string;
         institutionId: string;
         permitId?: string;
@@ -84,33 +90,52 @@ export class HelperService {
                 permitId: data.permitId,
             },
             {
-                secret: this.configService.get("SECRET_KEY"),
-                expiresIn: this.configService.get("JWT_EXPIRES_IN"),
+                secret: this.configService.get("ACCESS_KEY"),
+                expiresIn: this.configService.get("ACCESS_EXPIRES_IN"),
+            },
+        );
+    }
+
+    async createRefreshToken(data: {
+        tc: string;
+        institutionId: string;
+        permitId?: string;
+    }) {
+        return this.jwtService.signAsync(
+            {
+                userTc: data.tc,
+                institutionId: data.institutionId,
+                permitId: data.permitId,
+            },
+            {
+                secret: this.configService.get("REFRESH_KEY"),
+                expiresIn: this.configService.get("REFRESH_EXPIRES_IN"),
             },
         );
     }
 
     public async generateTokens(payload: any) {
-        const accessToken = await this.createToken(payload);
-        const refreshToken = await this.createToken(payload);
+        const [accessToken, refreshToken] = await Promise.all([
+            this.jwtService.signAsync(
+                {
+                    ...payload,
+                },
+                {
+                    secret: this.configService.get("ACCESS_KEY"),
+                    expiresIn: this.configService.get("ACCESS_EXPIRES_IN"),
+                },
+            ),
+            this.jwtService.signAsync(
+                {
+                    ...payload,
+                },
+                {
+                    secret: this.configService.get("REFRESH_KEY"),
+                    expiresIn: this.configService.get("REFRESH_EXPIRES_IN"),
+                },
+            ),
+        ]);
         return { accessToken, refreshToken };
-    }
-
-    async checkExpiredToken(token: string) {
-        try {
-            const payload = await this.jwtService.verifyAsync(token, {
-                secret: this.configService.get("SECRET_KEY"),
-            });
-
-            const now = Math.floor(Date.now() / 1000);
-            if (payload.exp && payload.exp < now) {
-                return true;
-            }
-
-            return false;
-        } catch {
-            return true;
-        }
     }
 
     async getRoleId(role: string) {

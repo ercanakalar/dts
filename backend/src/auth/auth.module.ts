@@ -7,6 +7,7 @@ import { PrismaModule } from "src/prisma/prisma.module";
 import { ConfigModule } from "@nestjs/config";
 import { EmailService } from "src/notification/email/email.service";
 import { AccessStrategy } from "./strategy/access.strategy";
+import { RefreshStrategy } from "./strategy/refresh.strategy";
 
 @Module({
     imports: [PrismaModule, ConfigModule.forRoot(), JwtModule.register({})],
@@ -16,6 +17,7 @@ import { AccessStrategy } from "./strategy/access.strategy";
         JwtService,
         EmailService,
         AccessStrategy,
+        RefreshStrategy,
     ],
     controllers: [AuthController],
 })

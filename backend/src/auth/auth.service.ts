@@ -98,6 +98,7 @@ export class AuthService {
                     },
                 },
                 accessToken: true,
+                refreshToken: true,
             },
         });
 
@@ -114,19 +115,12 @@ export class AuthService {
             throw new UnauthorizedException("Şifre yanlış.");
         }
 
-        const verified = await this.helperService.verifyToken(
-            foundUser.accessToken,
-        );
-
-        if (!verified) {
-            throw new UnauthorizedException("Token geçersiz.");
-        }
-
         const { accessToken, refreshToken } =
             await this.helperService.generateTokens({
+                userId: foundUser.id,
                 tc: foundUser.tc,
-                institutionId: verified.institutionId,
-                permitId: foundUser?.permit?.id,
+                institutionId: foundUser.permit?.institutionId,
+                permitId: foundUser.permit?.id,
             });
 
         await this.prismaService.auth.update({
@@ -229,9 +223,11 @@ export class AuthService {
     }
 
     async verifyRefreshToken(refreshToken: string) {
-        const payload = await this.helperService.verifyToken(refreshToken);
-        const user = await this.prismaService.auth.findFirst({
-            where: { refreshToken },
+        const payload =
+            await this.helperService.verifyRefreshToken(refreshToken);
+
+        const user = await this.prismaService.auth.findUnique({
+            where: { tc: payload.tc },
         });
 
         if (!user) {
@@ -242,7 +238,7 @@ export class AuthService {
     }
 
     async updateRefreshToken(tc: string, refreshToken: string) {
-        await this.prismaService.auth.updateMany({
+        await this.prismaService.auth.update({
             where: { tc },
             data: { refreshToken },
         });

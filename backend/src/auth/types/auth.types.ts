@@ -26,7 +26,9 @@ export type GiveRole = {
 };
 
 export type DecodedToken = {
-    userTc: string;
+    tc: string;
     institutionId: string;
     permitId: string;
+    iat: number;
+    exp: number;
 };

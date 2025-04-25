@@ -26,7 +26,7 @@ export class InstitutionGuard implements CanActivate {
         }
 
         const decoded: DecodedToken =
-            await this.helperService.verifyToken(token);
+            await this.helperService.verifyAccessToken(token);
 
         const permitWhere: Prisma.PermitWhereInput = {
             id: decoded.permitId,
