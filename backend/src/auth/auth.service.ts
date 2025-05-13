@@ -7,7 +7,12 @@ import { Prisma } from "@prisma/client";
 
 import { HelperService } from "./helper/helper.service";
 import { PrismaService } from "src/prisma/prisma.service";
-import { CreateUser, GiveRole, LoginUser } from "./types/auth.types";
+import {
+    CreateUser,
+    DecodedToken,
+    GiveRole,
+    LoginUser,
+} from "./types/auth.types";
 
 @Injectable()
 export class AuthService {
@@ -237,10 +242,14 @@ export class AuthService {
         return payload;
     }
 
-    async updateRefreshToken(tc: string, refreshToken: string) {
+    async updateRefreshToken(rest: DecodedToken) {
+        const { accessToken, refreshToken } =
+            await this.helperService.generateTokens(rest);
         await this.prismaService.auth.update({
-            where: { tc },
+            where: { tc: rest.tc },
             data: { refreshToken },
         });
+
+        return { accessToken, refreshToken };
     }
 }

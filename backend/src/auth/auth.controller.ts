@@ -47,8 +47,11 @@ export class AuthController {
     @Get("")
     @UseGuards(AdminGuard)
     @HttpCode(HttpStatus.OK)
-    async getUserById(@Query() params: { id: string }, @Req() req: any) {
-        const institutionId = req.user.institutionId;
+    async getUserById(
+        @Query() params: { id: string; institutionId: string },
+        @Req() req: any,
+    ) {
+        const institutionId = params.institutionId ?? req.user.institutionId;
         return await this.authService.getUserById(params.id, institutionId);
     }
 
@@ -66,14 +69,9 @@ export class AuthController {
     async refresh(@Body() body: { refreshToken: string }) {
         const { refreshToken: inputRefreshToken } = body;
 
-        const { iat, exp, ...rest }: DecodedToken =
+        const rest: DecodedToken =
             await this.authService.verifyRefreshToken(inputRefreshToken);
 
-        const { accessToken, refreshToken } =
-            await this.helperService.generateTokens(rest);
-
-        await this.authService.updateRefreshToken(rest.tc, refreshToken);
-
-        return { accessToken, refreshToken };
+        return await this.authService.updateRefreshToken(rest);
     }
 }

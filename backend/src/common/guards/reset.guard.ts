@@ -1,6 +1,7 @@
-import { Injectable, CanActivate, ExecutionContext } from "@nestjs/common";
+import { Injectable, ExecutionContext } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { HelperService } from "src/auth/helper/helper.service";
+import { DecodedTokenWithExp } from "src/auth/types/auth.types";
 
 @Injectable()
 export class ResethGuard extends AuthGuard("jwt-reset") {
@@ -13,7 +14,9 @@ export class ResethGuard extends AuthGuard("jwt-reset") {
             context.getArgs()[0].headers["authorization"],
         );
         if (!token) return false;
-        const decodedToken = await this.helperService.verifyAccessToken(token);
+        const decodedToken = (await this.helperService.verifyAccessToken(
+            token,
+        )) as DecodedTokenWithExp;
         const timeDiff = Date.now() - decodedToken.exp * 1000;
         if (timeDiff < 0) return true;
         if (timeDiff > 0) return false;

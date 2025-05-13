@@ -29,6 +29,12 @@ export type DecodedToken = {
     tc: string;
     institutionId: string;
     permitId: string;
+};
+
+export type DecodedTokenWithExp = {
+    tc: string;
+    institutionId: string;
+    permitId: string;
     iat: number;
     exp: number;
 };
